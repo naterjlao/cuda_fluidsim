@@ -1,0 +1,1 @@
+unsigned int normalized2bgr(const float data);
