@@ -77,9 +77,9 @@ __device__ void advect(
     float *dy_new)
 {
   // Trace back the trajectory given the current velocity
-  const size_t pos_x = (size_t)(((float)coord_x) - timestep /// @todo scalar rdx
+  const size_t pos_x = (size_t)(((float)coord_x) - ((float) rdx) * timestep
     * vector_component(dim_x, dim_y, coord_x, coord_y, X_COMPONENT, u_matrix));
-  const size_t pos_y = (size_t)(((float)coord_y) - timestep /// @todo scalar rdx
+  const size_t pos_y = (size_t)(((float)coord_y) - ((float) rdx) * timestep
     * vector_component(dim_x, dim_y, coord_x, coord_y, Y_COMPONENT, u_matrix));
 
   // Given the traceback position, perform bilinear interpolation of the
