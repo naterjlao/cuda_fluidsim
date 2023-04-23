@@ -40,8 +40,8 @@ static __host__ void initialize_bgr_field(unsigned int *data, const size_t nElem
 
 int main()
 {
-    const size_t HEIGHT = 800;
-    const size_t WIDTH = 800;
+    const size_t HEIGHT = 512;
+    const size_t WIDTH = 512;
     const size_t DIMENSIONS = 2;
     const size_t N_ELEMENTS = HEIGHT * WIDTH;
     const size_t FIELD_SIZE = sizeof(float) * N_ELEMENTS * DIMENSIONS;
@@ -95,6 +95,21 @@ int main()
         for (size_t idx = 0; idx < N_ELEMENTS; idx++)
         {
             printf("%x\n",h_bgr[idx]);
+        }
+#endif
+#if 0
+        printf("iteration: %d\n",temp);
+        for (size_t idx = 0; idx < N_ELEMENTS; idx++)
+        {
+            printf("(%f %f) ", h_pfield[idx * 2], h_pfield[idx * 2+1]);
+            if (idx % WIDTH == 0)
+                printf("\n");
+        }
+        for (size_t idx = 0; idx < N_ELEMENTS; idx++)
+        {
+            printf("0x%x ", h_bgr[idx]);
+            if (idx % WIDTH == 0)
+                printf("\n");
         }
 #endif
         // printf("0x%X\n",normalized2bgr(1.0));
