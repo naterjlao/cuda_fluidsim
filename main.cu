@@ -3,21 +3,49 @@
 
 #include "include/gradient.hpp"
 
+__global__ void test(unsigned int *data)
+{
+    const unsigned int thread_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
+    data[thread_idx] = (data[thread_idx] > 0) ? data[thread_idx] + 0x100 : thread_idx << 8;
+}
+
 int main()
 {
-    const size_t HEIGHT = 500;
-    const size_t WIDTH = 500;
-    unsigned int data[HEIGHT * WIDTH];
-    for (size_t i = 0; i < HEIGHT * WIDTH; i++)
-        data[i] = 0xFF0000FF;
+    const size_t HEIGHT = 800;
+    const size_t WIDTH = 800;
+    const size_t BUFFER_LEN = HEIGHT * WIDTH;
+    const size_t BUFFER_SIZE = sizeof(unsigned int) * BUFFER_LEN;
+    const size_t BLOCK_SIZE = 1024;
+    const size_t BLOCK_NUM = BUFFER_LEN / BLOCK_SIZE + ((BUFFER_LEN % BLOCK_SIZE > 0) ? 1 : 0);
 
-    cv::Mat image = cv::Mat(HEIGHT, WIDTH, CV_8UC4, (unsigned *)data);
+    unsigned int *data;
+    unsigned int *device_data;
 
-    printf("0x%X\n",normalized2bgr(1.0));
+    cudaMallocHost(&data, BUFFER_SIZE);
+    cudaMalloc(&device_data, BUFFER_SIZE);
+    memset(data, 0, BUFFER_SIZE);
 
-    cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Display Image", image);
-    cv::waitKey(0);
+    cv::Mat image;
 
+    while (true)
+    {
+        cudaMemcpy(device_data, data, BUFFER_SIZE, cudaMemcpyHostToDevice);
+        test<<<BLOCK_NUM, BLOCK_SIZE>>>(device_data);
+        cudaMemcpy(data, device_data, BUFFER_SIZE, cudaMemcpyDeviceToHost);
+
+        // cudaDeviceSynchronize();
+
+        image = cv::Mat(HEIGHT, WIDTH, CV_8UC4, (unsigned *)data);
+
+        // printf("0x%X\n",normalized2bgr(1.0));
+        //printf("0x%X\n", data[1]);
+
+        cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Display Image", image);
+        cv::waitKey(1);
+    }
+
+    cudaFree(data);
+    cudaFree(device_data);
     return 0;
 }
