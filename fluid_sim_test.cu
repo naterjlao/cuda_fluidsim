@@ -72,8 +72,8 @@ void test_ND_dim()
     cudaMemcpy(d_buffer, buffer, sizeof(buffer), cudaMemcpyHostToDevice);
     thread_idx_ND<<<dimGrid,dimBlock>>>(d_buffer, nRows, nCols, nDims);
     cudaMemcpy(buffer, d_buffer, sizeof(buffer), cudaMemcpyDeviceToHost);
-    cudaError err = cudaDeviceSynchronize();
-    printf("%d\n",err);
+    //cudaError err = cudaDeviceSynchronize();
+    //printf("%d\n",err);
     for (size_t idx = 0; idx < nRows; idx++)
     {
         for (size_t jdx = 0; jdx < nCols; jdx++)
@@ -93,25 +93,65 @@ void test_ND_dim()
 __global__ void kernel_advect(
     const size_t dim_x,
     const size_t dim_y,
-    float* data
-)
+    float* data)
 {
     const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
+    const size_t z = blockIdx.z * blockDim.z + threadIdx.z;
     const size_t rdx = 1;
     const float timestep = 0.1;
     const float dissipation = 0.999;
+    
+    if (y < dim_y && x < dim_x)
+    {
+        float dx_new, dy_new;
+        advect(dim_x,dim_y,x,y,
+            rdx,timestep,dissipation,
+            data,data,&dx_new, &dy_new);
+        data[(y * dim_x + x ) * 2 + 0] = dx_new;
+        data[(y * dim_x + x ) * 2 + 1] = dy_new;
+    }
+}
 
-    float dx_new, dy_new;
+void test_advect()
+{
+    const size_t nRows = 5;
+    const size_t nCols = 5;
 
-    advect(dim_x,dim_y,x,y,
-        rdx,timestep,dissipation,
-        data,data,&dx_new, &dy_new);
+    dim3 dimBlock(32,32); // This is the maximum as per CUDA 2.x
+    dim3 dimGrid( // Method of calculating the number of blocks to use
+        (nCols + dimBlock.x - 1) / dimBlock.x,
+        (nRows + dimBlock.y - 1) / dimBlock.y,
+        2);
+
+    float pdata[nRows][nCols][2] =
+    {
+        {{1.0,1.0},{1.0,1.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
+        {{1.0,1.0},{1.0,1.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
+        {{0.0,0.0},{0.0,0.0},{-1.0,-1.0},{0.0,0.0},{0.0,0.0}},
+        {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
+        {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}}
+    };
+    float *ddata;
+    cudaMalloc(&ddata, sizeof(pdata));
+    cudaMemcpy(ddata, pdata, sizeof(pdata), cudaMemcpyHostToDevice);
+    kernel_advect<<<dimGrid, dimBlock>>>(nCols, nRows, ddata);
+    cudaMemcpy(pdata, ddata, sizeof(pdata), cudaMemcpyDeviceToHost);
+    cudaFree(ddata);
+    for (size_t idx = 0; idx < nRows; idx++)
+    {
+        for (size_t jdx = 0; jdx < nCols; jdx++)
+        {
+            printf("(%f, %f) ", pdata[idx][jdx][0], pdata[idx][jdx][1]);
+        }
+        printf("\n");
+    }
 }
 
 int main()
 {
     //test_2D_dim();
-    test_ND_dim();
+    //test_ND_dim();
+    test_advect();
     return 0;
 }
