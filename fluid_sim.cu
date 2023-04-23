@@ -25,7 +25,7 @@ static __device__ bool vector_component_idx(
   bool retval = false;
   if (x < dim_x && y < dim_y)
   {
-    *vector_idx = (y * dim_x + x) + component;
+    *vector_idx = (y * dim_x + x) * 2 + component;
     retval = true;
   }
   return retval;
@@ -92,11 +92,11 @@ __device__ void advect(
   v_s = vector_component(dim_x, dim_y, pos_x, pos_y + 1, X_COMPONENT, d_matrix);
   v_e = vector_component(dim_x, dim_y, pos_x + 1, pos_y, X_COMPONENT, d_matrix);
   v_w = vector_component(dim_x, dim_y, pos_x - 1, pos_y, X_COMPONENT, d_matrix);
-  *dx_new = (v_n + v_s + v_e + v_w) / 4.0;
+  *dx_new = dissipation * ((v_n + v_s + v_e + v_w) / 4.0);
 
   v_n = vector_component(dim_x, dim_y, pos_x, pos_y - 1, Y_COMPONENT, d_matrix);
   v_s = vector_component(dim_x, dim_y, pos_x, pos_y + 1, Y_COMPONENT, d_matrix);
   v_e = vector_component(dim_x, dim_y, pos_x + 1, pos_y, Y_COMPONENT, d_matrix);
   v_w = vector_component(dim_x, dim_y, pos_x - 1, pos_y, Y_COMPONENT, d_matrix);
-  *dy_new = (v_n + v_s + v_e + v_w) / 4.0;
+  *dy_new = dissipation * ((v_n + v_s + v_e + v_w) / 4.0);
 }

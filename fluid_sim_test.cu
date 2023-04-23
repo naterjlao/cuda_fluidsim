@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "include/fluid_sim.cuh"
+#include "include/gradient.cuh"
 
 __global__ void thread_idx_2D(size_t *buffer, const size_t nCols)
 {
@@ -99,7 +100,7 @@ __global__ void kernel_advect(
     const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
     const size_t z = blockIdx.z * blockDim.z + threadIdx.z;
     const size_t rdx = 1;
-    const float timestep = 0.1;
+    const float timestep = 0.001;
     const float dissipation = 0.999;
     
     if (y < dim_y && x < dim_x)
@@ -115,37 +116,62 @@ __global__ void kernel_advect(
 
 void test_advect()
 {
+    size_t idx, jdx;
     const size_t nRows = 5;
     const size_t nCols = 5;
 
     dim3 dimBlock(32,32); // This is the maximum as per CUDA 2.x
-    dim3 dimGrid( // Method of calculating the number of blocks to use
+    dim3 dimGrid2( // Method of calculating the number of blocks to use
+        (nCols + dimBlock.x - 1) / dimBlock.x,
+        (nRows + dimBlock.y - 1) / dimBlock.y);
+    dim3 dimGrid3( // Method of calculating the number of blocks to use
         (nCols + dimBlock.x - 1) / dimBlock.x,
         (nRows + dimBlock.y - 1) / dimBlock.y,
         2);
 
     float pdata[nRows][nCols][2] =
     {
-        {{1.0,1.0},{1.0,1.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
-        {{1.0,1.0},{1.0,1.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
+        {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
+        {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
         {{0.0,0.0},{0.0,0.0},{-1.0,-1.0},{0.0,0.0},{0.0,0.0}},
         {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
         {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}}
     };
     float *ddata;
     cudaMalloc(&ddata, sizeof(pdata));
+
     cudaMemcpy(ddata, pdata, sizeof(pdata), cudaMemcpyHostToDevice);
-    kernel_advect<<<dimGrid, dimBlock>>>(nCols, nRows, ddata);
+    kernel_advect<<<dimGrid3, dimBlock>>>(nCols, nRows, ddata);
     cudaMemcpy(pdata, ddata, sizeof(pdata), cudaMemcpyDeviceToHost);
-    cudaFree(ddata);
-    for (size_t idx = 0; idx < nRows; idx++)
+    for ( idx = 0; idx < nRows; idx++)
     {
-        for (size_t jdx = 0; jdx < nCols; jdx++)
+        for ( jdx = 0; jdx < nCols; jdx++)
         {
             printf("(%f, %f) ", pdata[idx][jdx][0], pdata[idx][jdx][1]);
         }
         printf("\n");
     }
+
+    unsigned int bgr[nRows][nCols];
+    memset(bgr, 0, sizeof(bgr));
+    unsigned int *dbgr;
+    cudaMalloc(&dbgr, sizeof(bgr));
+
+    cudaMemcpy(dbgr, bgr, sizeof(bgr), cudaMemcpyHostToDevice);
+    kernel_gradient<<<dimGrid2, dimBlock>>>(ddata, dbgr, nCols, nRows);
+    cudaMemcpy(bgr, dbgr, sizeof(bgr), cudaMemcpyDeviceToHost);
+
+    for ( idx = 0; idx < nRows; idx++)
+    {
+        for ( jdx = 0; jdx < nCols; jdx++)
+        {
+            printf("0x%X ", bgr[idx][jdx]);
+        }
+        printf("\n");
+    }
+
+    cudaFree(ddata);
+    cudaFree(dbgr);
 }
 
 int main()
