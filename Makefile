@@ -1,15 +1,19 @@
 CUDA_ARCH=sm_86
+OPENCV_ARGS=`pkg-config --cflags opencv` `pkg-config --libs opencv`
 INCLUDE=./include
 
 ################### EXECUTABLES ###################
 
-main: main.cu gradient.o
-	nvcc gradient.o `pkg-config --cflags opencv` `pkg-config --libs opencv` main.cu -o main
+main: main.o gradient.o
+	nvcc -arch=$(CUDA_ARCH) $(OPENCV_ARGS) main.o gradient.o -o main
 
 fluid_sim_test: fluid_sim_test.o fluid_sim.o
 	nvcc -arch=$(CUDA_ARCH) fluid_sim_test.o fluid_sim.o -o fluid_sim_test
 
 ################### OBJECTS ###################
+
+main.o: main.cu
+	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc main.cu
 
 gradient.o: gradient.cu $(INCLUDE)/gradient.hpp
 	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc gradient.cu
