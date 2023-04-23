@@ -14,7 +14,7 @@ static float rand_norm_scalar()
 
 static __host__ void initialize_p_field(float *data, const size_t nRows, const size_t nCols)
 {
-    const size_t radius = 300;
+    const size_t radius = 128;
     const size_t x_lower = nCols/2 - radius;
     const size_t x_upper = nCols/2 + radius;
     const size_t y_lower = nRows/2 - radius;
