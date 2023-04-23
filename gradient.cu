@@ -17,9 +17,11 @@ __global__ void kernel_gradient(
         r = ((float) 0xFF) * abs(r);
         g = ((float) 0xFF) * abs(g);
 
-        bgr[y * dim_x + x] &= 0xFF0000FF;
-        bgr[y * dim_x + x] |= 0x0000FF00 & (((unsigned char) r) << 8);
-        bgr[y * dim_x + x] |= 0x00FF0000 & (((unsigned char) g) << 16);
+        // This is actually little-endian,
+        // so octets are arranged like: 0xAARRGGBB
+        bgr[y * dim_x + x] = 0xFF000000;
+        bgr[y * dim_x + x] |= 0x00FF0000 & (((unsigned char) r) << 16);
+        bgr[y * dim_x + x] |= 0x0000FF00 & (((unsigned char) g) << 8);
     }
 }
 

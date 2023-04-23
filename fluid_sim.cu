@@ -56,6 +56,32 @@ static __device__ float vector_component(
   return retval;
 }
 
+__global__ void kernel_advect(
+    const size_t dim_x,
+    const size_t dim_y,
+    float* data,
+    const size_t rdx,
+    const float timestep,
+    const float dissipation)
+{
+    const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
+#if 0
+    const size_t rdx = 5;
+    const float timestep = 0.02;
+    const float dissipation = 0.999;
+#endif
+    if (y < dim_y && x < dim_x)
+    {
+        float dx_new, dy_new;
+        advect(dim_x,dim_y,x,y,
+            rdx,timestep,dissipation,
+            data,data,&dx_new, &dy_new);
+        data[(y * dim_x + x ) * 2 + 0] = dx_new;
+        data[(y * dim_x + x ) * 2 + 1] = dy_new;
+    }
+}
+
 /// @brief
 /// @param dim_x Dimension x size of the input matrices
 /// @param dim_y Dimension y size of the input matrices

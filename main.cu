@@ -1,45 +1,123 @@
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "include/gradient.cuh"
+#include "include/fluid_sim.cuh"
+
+static float rand_norm_scalar()
+{
+    float retval = (float) rand() / (float) RAND_MAX + 1.0;
+    retval = retval * ((rand() % 2 > 0) ? 1.0 : -1.0);
+    return retval;
+}
+
+static __host__ void initialize_p_field(float *data, const size_t nRows, const size_t nCols)
+{
+    const size_t radius = 300;
+    const size_t x_lower = nCols/2 - radius;
+    const size_t x_upper = nCols/2 + radius;
+    const size_t y_lower = nRows/2 - radius;
+    const size_t y_upper = nRows/2 + radius;
+
+    for (size_t y = y_lower; y < y_upper; y++)
+    {
+        for (size_t x = x_lower; x < x_upper; x++)
+        {
+            data[(y * nCols + x) * 2] = rand_norm_scalar();
+            data[(y * nCols + x) * 2 + 1] = rand_norm_scalar();
+        }
+    }
+}
+
+static __host__ void initialize_bgr_field(unsigned int *data, const size_t nElements)
+{
+    // Set the alpha field to max for all pixels
+    // Note: little endian representation (A,R,G,B)
+    for (size_t idx = 0; idx < nElements; idx++)
+        data[idx] = 0xFF000000; 
+}
 
 int main()
 {
     const size_t HEIGHT = 800;
     const size_t WIDTH = 800;
-    const size_t BUFFER_LEN = HEIGHT * WIDTH;
-    const size_t BUFFER_SIZE = sizeof(unsigned int) * BUFFER_LEN;
-    const size_t BLOCK_SIZE = 1024;
-    const size_t BLOCK_NUM = BUFFER_LEN / BLOCK_SIZE + ((BUFFER_LEN % BLOCK_SIZE > 0) ? 1 : 0);
+    const size_t DIMENSIONS = 2;
+    const size_t N_ELEMENTS = HEIGHT * WIDTH;
+    const size_t FIELD_SIZE = sizeof(float) * N_ELEMENTS * DIMENSIONS;
+    const size_t BGR_SIZE = sizeof(unsigned int) * N_ELEMENTS;
+    const size_t RDX = HEIGHT / 2;
 
-    unsigned int *data;
-    unsigned int *device_data;
+    // Simulation timestep
+    const float TIMESTEP = 0.001;
 
-    cudaMallocHost(&data, BUFFER_SIZE);
-    cudaMalloc(&device_data, BUFFER_SIZE);
-    memset(data, 0, BUFFER_SIZE);
+    // Rendering frame rate (milliseconds)
+    const int FRAMERATE = 10;
+
+    // Setup CUDA Grids and Blocks
+    const dim3 DIM_BLOCK(32,32); // This is the maximum as per CUDA 2.x
+    const dim3 DIM_GRID(
+        (WIDTH + DIM_BLOCK.x - 1) / DIM_BLOCK.x,
+        (HEIGHT + DIM_BLOCK.y - 1) / DIM_BLOCK.y);
+
+    // Setup host pressure field
+    float *h_pfield;
+    cudaMallocHost(&h_pfield, FIELD_SIZE);
+    initialize_p_field(h_pfield, HEIGHT, WIDTH);
+
+    // Setup device pressure field
+    float *d_pfield;
+    cudaMalloc(&d_pfield, FIELD_SIZE);
+
+    // Setup host image matrix
+    unsigned int *h_bgr;
+    cudaMallocHost(&h_bgr, BGR_SIZE);
+    initialize_bgr_field(h_bgr, N_ELEMENTS);
+
+    // Setup device image matrix
+    unsigned int *d_bgr;
+    cudaMalloc(&d_bgr, BGR_SIZE);
+    cudaMemcpy(d_bgr, h_bgr, BGR_SIZE, cudaMemcpyHostToDevice);
 
     cv::Mat image;
-
+    size_t temp = 0;
     while (true)
     {
-        cudaMemcpy(device_data, data, BUFFER_SIZE, cudaMemcpyHostToDevice);
-        //test<<<BLOCK_NUM, BLOCK_SIZE>>>(device_data);
-        cudaMemcpy(data, device_data, BUFFER_SIZE, cudaMemcpyDeviceToHost);
+        cudaMemcpy(d_pfield, h_pfield, FIELD_SIZE, cudaMemcpyHostToDevice);
+        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(WIDTH, HEIGHT, d_pfield, RDX, TIMESTEP);
+        kernel_gradient<<<DIM_GRID, DIM_BLOCK>>>(d_pfield, d_bgr, WIDTH, HEIGHT);
+        cudaMemcpy(h_pfield, d_pfield, FIELD_SIZE, cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_bgr, d_bgr, BGR_SIZE, cudaMemcpyDeviceToHost);
+        cudaDeviceSynchronize();
 
-        // cudaDeviceSynchronize();
-
-        image = cv::Mat(HEIGHT, WIDTH, CV_8UC4, (unsigned *)data);
-
+        image = cv::Mat(HEIGHT, WIDTH, CV_8UC4, (unsigned *)h_bgr);
+#if 0
+        for (size_t idx = 0; idx < N_ELEMENTS; idx++)
+        {
+            printf("%x\n",h_bgr[idx]);
+        }
+#endif
         // printf("0x%X\n",normalized2bgr(1.0));
         //printf("0x%X\n", data[1]);
+        //printf("%f\n",rand_norm_scalar());
 
         cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
         cv::imshow("Display Image", image);
-        cv::waitKey(1);
+        cv::waitKey(FRAMERATE);
+
+        if (temp > 50)
+        {
+            temp = 0;
+            initialize_p_field(h_pfield, HEIGHT, WIDTH);
+        }
+        else
+        {
+            temp++;
+        }
     }
 
-    cudaFree(data);
-    cudaFree(device_data);
+    cudaFree(h_pfield);
+    cudaFree(d_pfield);
+    cudaFree(h_bgr);
     return 0;
 }

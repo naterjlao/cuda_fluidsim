@@ -7,8 +7,8 @@ EXECUTABLES=main fluid_sim_test
 
 all: $(EXECUTABLES)
 
-main: main.o gradient.o
-	nvcc -arch=$(CUDA_ARCH) $(OPENCV_ARGS) main.o gradient.o -o main
+main: main.o gradient.o fluid_sim.o
+	nvcc -arch=$(CUDA_ARCH) $(OPENCV_ARGS) main.o gradient.o fluid_sim.o -o main
 
 fluid_sim_test: fluid_sim_test.o fluid_sim.o gradient.o
 	nvcc -arch=$(CUDA_ARCH) fluid_sim_test.o fluid_sim.o gradient.o -o fluid_sim_test

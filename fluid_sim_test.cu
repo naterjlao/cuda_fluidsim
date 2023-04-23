@@ -91,28 +91,7 @@ void test_ND_dim()
 /// @param dim_y 
 /// @param data 
 /// @return 
-__global__ void kernel_advect(
-    const size_t dim_x,
-    const size_t dim_y,
-    float* data)
-{
-    const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
-    const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
-    const size_t z = blockIdx.z * blockDim.z + threadIdx.z;
-    const size_t rdx = 1;
-    const float timestep = 0.001;
-    const float dissipation = 0.999;
-    
-    if (y < dim_y && x < dim_x)
-    {
-        float dx_new, dy_new;
-        advect(dim_x,dim_y,x,y,
-            rdx,timestep,dissipation,
-            data,data,&dx_new, &dy_new);
-        data[(y * dim_x + x ) * 2 + 0] = dx_new;
-        data[(y * dim_x + x ) * 2 + 1] = dy_new;
-    }
-}
+
 
 void test_advect()
 {
@@ -124,11 +103,12 @@ void test_advect()
     dim3 dimGrid2( // Method of calculating the number of blocks to use
         (nCols + dimBlock.x - 1) / dimBlock.x,
         (nRows + dimBlock.y - 1) / dimBlock.y);
+#if 0
     dim3 dimGrid3( // Method of calculating the number of blocks to use
         (nCols + dimBlock.x - 1) / dimBlock.x,
         (nRows + dimBlock.y - 1) / dimBlock.y,
         2);
-
+#endif
     float pdata[nRows][nCols][2] =
     {
         {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
@@ -141,7 +121,7 @@ void test_advect()
     cudaMalloc(&ddata, sizeof(pdata));
 
     cudaMemcpy(ddata, pdata, sizeof(pdata), cudaMemcpyHostToDevice);
-    kernel_advect<<<dimGrid3, dimBlock>>>(nCols, nRows, ddata);
+    kernel_advect<<<dimGrid2, dimBlock>>>(nCols, nRows, ddata);
     cudaMemcpy(pdata, ddata, sizeof(pdata), cudaMemcpyDeviceToHost);
     for ( idx = 0; idx < nRows; idx++)
     {
