@@ -1,3 +1,5 @@
+#include "include/fluid_sim.cuh"
+
 enum VECTOR_COMPONENT
 {
   X_COMPONENT = 0,
@@ -12,7 +14,7 @@ enum VECTOR_COMPONENT
 /// @param y
 /// @param component
 /// @return
-__device__ bool vector_component_idx(
+static __device__ bool vector_component_idx(
     const unsigned int dim_x,
     const unsigned int dim_y,
     const unsigned int x,
@@ -37,7 +39,7 @@ __device__ bool vector_component_idx(
 /// @param component
 /// @param vector
 /// @return
-__device__ float vector_component(
+static __device__ float vector_component(
     const unsigned int dim_x,
     const unsigned int dim_y,
     const unsigned int x,
