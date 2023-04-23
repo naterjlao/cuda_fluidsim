@@ -3,12 +3,6 @@
 
 #include "include/gradient.hpp"
 
-__global__ void test(unsigned int *data)
-{
-    const unsigned int thread_idx = (blockIdx.x * blockDim.x) + threadIdx.x;
-    data[thread_idx] = (data[thread_idx] > 0) ? data[thread_idx] + 0x100 : thread_idx << 8;
-}
-
 int main()
 {
     const size_t HEIGHT = 800;
