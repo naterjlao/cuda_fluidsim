@@ -24,7 +24,7 @@ int main()
     while (true)
     {
         cudaMemcpy(device_data, data, BUFFER_SIZE, cudaMemcpyHostToDevice);
-        test<<<BLOCK_NUM, BLOCK_SIZE>>>(device_data);
+        //test<<<BLOCK_NUM, BLOCK_SIZE>>>(device_data);
         cudaMemcpy(data, device_data, BUFFER_SIZE, cudaMemcpyDeviceToHost);
 
         // cudaDeviceSynchronize();
