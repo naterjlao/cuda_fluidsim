@@ -15,7 +15,7 @@ fluid_sim_test: fluid_sim_test.o fluid_sim.o
 main.o: main.cu
 	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc main.cu
 
-gradient.o: gradient.cu $(INCLUDE)/gradient.hpp
+gradient.o: gradient.cu $(INCLUDE)/gradient.cuh
 	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc gradient.cu
 
 fluid_sim_test.o: fluid_sim_test.cu

@@ -1,7 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
 
-#include "include/gradient.hpp"
+#include "include/gradient.cuh"
 
 int main()
 {

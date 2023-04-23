@@ -1,4 +1,4 @@
-#include "include/gradient.hpp"
+#include "include/gradient.cuh"
 /*
 FF0000 -> BLUE
 FFFF00
