@@ -14,7 +14,7 @@ static float rand_norm_scalar()
 
 static __host__ void initialize_p_field(float *data, const size_t nRows, const size_t nCols)
 {
-    const size_t radius = 128;
+    const size_t radius = rand() % 100;
     const size_t x_lower = nCols/2 - radius;
     const size_t x_upper = nCols/2 + radius;
     const size_t y_lower = nRows/2 - radius;
@@ -67,7 +67,9 @@ int main()
 
     // Setup device pressure field
     float *d_pfield;
+    float *d_pfield_temp;
     cudaMalloc(&d_pfield, FIELD_SIZE);
+    cudaMalloc(&d_pfield_temp, FIELD_SIZE);
 
     // Setup host image matrix
     unsigned int *h_bgr;
@@ -84,7 +86,9 @@ int main()
     while (true)
     {
         cudaMemcpy(d_pfield, h_pfield, FIELD_SIZE, cudaMemcpyHostToDevice);
-        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(WIDTH, HEIGHT, d_pfield, RDX, TIMESTEP);
+        cudaMemcpy(d_pfield_temp, d_pfield, FIELD_SIZE, cudaMemcpyDeviceToDevice);
+        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(WIDTH, HEIGHT, d_pfield, d_pfield_temp, RDX, TIMESTEP);
+        cudaMemcpy(d_pfield, d_pfield_temp, FIELD_SIZE, cudaMemcpyDeviceToDevice);
         kernel_gradient<<<DIM_GRID, DIM_BLOCK>>>(d_pfield, d_bgr, WIDTH, HEIGHT);
         cudaMemcpy(h_pfield, d_pfield, FIELD_SIZE, cudaMemcpyDeviceToHost);
         cudaMemcpy(h_bgr, d_bgr, BGR_SIZE, cudaMemcpyDeviceToHost);

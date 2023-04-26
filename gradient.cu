@@ -14,8 +14,8 @@ __global__ void kernel_gradient(
         float r = field[(y * dim_x + x) * 2];
         float g = field[(y * dim_x + x) * 2 + 1];
 
-        r = ((float) 0xFF) * abs(r);
-        g = ((float) 0xFF) * abs(g);
+        r = ((float) 0xFF) * (abs(r) > 1.0 ? 1.0 : abs(r));
+        g = ((float) 0xFF) * (abs(g) > 1.0 ? 1.0 : abs(g));
 
         // This is actually little-endian,
         // so octets are arranged like: 0xAARRGGBB

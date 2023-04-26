@@ -1,7 +1,8 @@
 __global__ void kernel_advect(
     const size_t dim_x,
     const size_t dim_y,
-    float* data,
+    const float* input_data,
+    float* output_data,
     const size_t rdx,
     const float timestep,
     const float dissipation = 0.999);
