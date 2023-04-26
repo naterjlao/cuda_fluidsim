@@ -61,11 +61,6 @@ __global__ void kernel_advect(
 {
     const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
     const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
-#if 0
-    const size_t rdx = 5;
-    const float timestep = 0.02;
-    const float dissipation = 0.999;
-#endif
     if ((y < dim_y && x < dim_x) && (x > 0 &&  y > 0))
     {
         float dx_new, dy_new;
