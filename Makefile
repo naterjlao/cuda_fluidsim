@@ -8,10 +8,19 @@ EXECUTABLES=main fluid_sim_test
 all: $(EXECUTABLES)
 
 main: main.o gradient.o fluid_sim.o
-	nvcc -arch=$(CUDA_ARCH) $(OPENCV_ARGS) main.o gradient.o fluid_sim.o -o main
+	nvcc -arch=$(CUDA_ARCH) $(OPENCV_ARGS) \
+		main.o \
+		gradient.o \
+		fluid_sim.o \
+		-o main
 
 fluid_sim_test: fluid_sim_test.o fluid_sim.o gradient.o
-	nvcc -arch=$(CUDA_ARCH) fluid_sim_test.o fluid_sim.o gradient.o -o fluid_sim_test
+	nvcc -arch=$(CUDA_ARCH) \
+		fluid_sim_test.o \
+		fluid_sim.o \
+		gradient.o \
+		fluid_utils.o \
+		-o fluid_sim_test
 
 ################### OBJECTS ###################
 
@@ -26,6 +35,9 @@ fluid_sim_test.o: fluid_sim_test.cu
 
 fluid_sim.o: fluid_sim.cu $(INCLUDE)/fluid_sim.cuh
 	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_sim.cu
+
+fluid_utils.o: fluid_utils.cu $(INCLUDE)/fluid_utils.cuh
+	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_utils.cu
 
 .PHONY: all clean
 clean:

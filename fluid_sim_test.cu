@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "include/fluid_sim.cuh"
 #include "include/gradient.cuh"
+#include "include/fluid_utils.cuh"
 
 __global__ void thread_idx_2D(size_t *buffer, const size_t nCols)
 {
@@ -154,10 +155,25 @@ void test_advect()
     cudaFree(dbgr);
 }
 
+void test_bilinear_interpolation()
+{
+    const MatrixDim dim = { 2, 2, 2};
+    float data[dim.x][dim.y][dim.vl] =
+    {
+        {{-1.0, 1.0}, {1.0, 1.0}},
+        {{-1.0, -1.0}, {1.0, -1.0}}
+    };
+
+    float vx = 10.0, vy = 10.0;
+    bilinear_interpolation(0.05,0.5,(float *)data,dim,&vx,&vy);
+    printf("%f, %f\n",vx, vy);
+}
+
 int main()
 {
     //test_2D_dim();
     //test_ND_dim();
-    test_advect();
+    //test_advect();
+    test_bilinear_interpolation();
     return 0;
 }

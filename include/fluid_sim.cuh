@@ -1,3 +1,6 @@
+#ifndef __FLUID_SIM_CUH__
+#define __FLUID_SIM_CUH__
+
 __global__ void kernel_advect(
     const size_t dim_x,
     const size_t dim_y,
@@ -19,3 +22,4 @@ __device__ void advect(
     const float *d_matrix,
     float *dx_new,
     float *dy_new);
+#endif
