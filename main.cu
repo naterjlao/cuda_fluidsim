@@ -4,6 +4,7 @@
 
 #include "include/gradient.cuh"
 #include "include/fluid_sim.cuh"
+#include "include/fluid_utils.cuh"
 
 static float rand_norm_scalar()
 {
@@ -12,20 +13,20 @@ static float rand_norm_scalar()
     return retval;
 }
 
-static __host__ void initialize_p_field(float *data, const size_t nRows, const size_t nCols)
+static __host__ void initialize_p_field(float *data, const MatrixDim dim)
 {
-    const size_t radius = rand() % 100;
-    const size_t x_lower = nCols/2 - radius;
-    const size_t x_upper = nCols/2 + radius;
-    const size_t y_lower = nRows/2 - radius;
-    const size_t y_upper = nRows/2 + radius;
+    const size_t radius = 256;
+    const size_t x_lower = dim.x/2 - radius;
+    const size_t x_upper = dim.x/2 + radius;
+    const size_t y_lower = dim.y/2 - radius - 100;
+    const size_t y_upper = dim.y/2 + radius + 100;
 
     for (size_t y = y_lower; y < y_upper; y++)
     {
         for (size_t x = x_lower; x < x_upper; x++)
         {
-            data[(y * nCols + x) * 2] = rand_norm_scalar();
-            data[(y * nCols + x) * 2 + 1] = rand_norm_scalar();
+            data[matrix_index(x,y,dim,0)] = 2.0 * rand_norm_scalar();
+            data[matrix_index(x,y,dim,1)] = 2.0;// * rand_norm_scalar();
         }
     }
 }
@@ -40,30 +41,28 @@ static __host__ void initialize_bgr_field(unsigned int *data, const size_t nElem
 
 int main()
 {
-    const size_t HEIGHT = 512;
-    const size_t WIDTH = 512;
-    const size_t DIMENSIONS = 2;
-    const size_t N_ELEMENTS = HEIGHT * WIDTH;
-    const size_t FIELD_SIZE = sizeof(float) * N_ELEMENTS * DIMENSIONS;
+    const MatrixDim DIMENSIONS = {768, 768, 2};
+    const size_t N_ELEMENTS = DIMENSIONS.x * DIMENSIONS.y;
+    const size_t FIELD_SIZE = sizeof(float) * N_ELEMENTS * DIMENSIONS.vl;
     const size_t BGR_SIZE = sizeof(unsigned int) * N_ELEMENTS;
-    const size_t RDX = HEIGHT / 2;
+    const size_t RDX = 512;
 
     // Simulation timestep
-    const float TIMESTEP = 0.001;
+    const float TIMESTEP = 0.01;
 
     // Rendering frame rate (milliseconds)
-    const int FRAMERATE = 10;
+    const int FRAMERATE = 1;
 
     // Setup CUDA Grids and Blocks
     const dim3 DIM_BLOCK(32,32); // This is the maximum as per CUDA 2.x
     const dim3 DIM_GRID(
-        (WIDTH + DIM_BLOCK.x - 1) / DIM_BLOCK.x,
-        (HEIGHT + DIM_BLOCK.y - 1) / DIM_BLOCK.y);
+        (DIMENSIONS.x + DIM_BLOCK.x - 1) / DIM_BLOCK.x,
+        (DIMENSIONS.y + DIM_BLOCK.y - 1) / DIM_BLOCK.y);
 
     // Setup host pressure field
     float *h_pfield;
     cudaMallocHost(&h_pfield, FIELD_SIZE);
-    initialize_p_field(h_pfield, HEIGHT, WIDTH);
+    initialize_p_field(h_pfield, DIMENSIONS);
 
     // Setup device pressure field
     float *d_pfield;
@@ -87,14 +86,14 @@ int main()
     {
         cudaMemcpy(d_pfield, h_pfield, FIELD_SIZE, cudaMemcpyHostToDevice);
         cudaMemcpy(d_pfield_temp, d_pfield, FIELD_SIZE, cudaMemcpyDeviceToDevice);
-        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(WIDTH, HEIGHT, d_pfield, d_pfield_temp, RDX, TIMESTEP);
+        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_pfield_temp,RDX,TIMESTEP,0.8);
         cudaMemcpy(d_pfield, d_pfield_temp, FIELD_SIZE, cudaMemcpyDeviceToDevice);
-        kernel_gradient<<<DIM_GRID, DIM_BLOCK>>>(d_pfield, d_bgr, WIDTH, HEIGHT);
+        kernel_gradient<<<DIM_GRID, DIM_BLOCK>>>(d_pfield, d_bgr, DIMENSIONS);
         cudaMemcpy(h_pfield, d_pfield, FIELD_SIZE, cudaMemcpyDeviceToHost);
         cudaMemcpy(h_bgr, d_bgr, BGR_SIZE, cudaMemcpyDeviceToHost);
         cudaDeviceSynchronize();
 
-        image = cv::Mat(HEIGHT, WIDTH, CV_8UC4, (unsigned *)h_bgr);
+        image = cv::Mat(DIMENSIONS.y, DIMENSIONS.x, CV_8UC4, (unsigned *)h_bgr);
 #if 0
         for (size_t idx = 0; idx < N_ELEMENTS; idx++)
         {
@@ -124,10 +123,10 @@ int main()
         cv::imshow("Display Image", image);
         cv::waitKey(FRAMERATE);
 
-        if (temp > 50)
+        if (temp > 100)
         {
             temp = 0;
-            initialize_p_field(h_pfield, HEIGHT, WIDTH);
+            initialize_p_field(h_pfield, DIMENSIONS);
         }
         else
         {

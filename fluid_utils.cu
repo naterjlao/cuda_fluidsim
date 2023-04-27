@@ -35,7 +35,9 @@ __host__ __device__ bool bilinear_interpolation(
     const size_t idy_lo = (size_t)floor(py);
 
     bool retval = false;
-    if ((idx_lo >= 0) && (idy_lo >= 0) && (idx_hi < dim.y) && (idy_hi < dim.y))
+
+    /// @todo check lower bounds
+    if ((idx_hi < dim.y) && (idy_hi < dim.y))
     {
         const float factor_h = px - floor(px);  // Horizontal Ratio Factor
         const float factor_v = py - floor(py);  // Vertical Ratio Factor
