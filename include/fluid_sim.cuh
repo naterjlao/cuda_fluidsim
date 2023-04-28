@@ -22,4 +22,12 @@ __device__ void advect(
     const float *d_matrix,
     float *dx_new,
     float *dy_new);
+
+__host__ __device__ Vector jacobi(
+    const size_t x, const size_t y,
+    const float *x_vector,
+    const float *b_vector,
+    const MatrixDim dim,
+    const float alpha,
+    const float beta);
 #endif

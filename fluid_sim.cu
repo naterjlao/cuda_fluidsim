@@ -52,3 +52,21 @@ __device__ void advect(
   // using the 4 neighboring points and load into the output result
   bilinear_interpolation(px, py, d_matrix, dim, dx_new, dy_new);
 }
+
+__host__ __device__ Vector jacobi(
+    const size_t x, const size_t y,
+    const float *x_vector,
+    const float *b_vector,
+    const MatrixDim dim,
+    const float alpha,
+    const float beta)
+{    
+    Vector vN, vS, vE, vW;
+    neighbors(x, y, x_vector, dim, &vN, &vS, &vE, &vW);
+
+    const Vector vC = {
+        .x = b_vector[matrix_index(x, y, dim, 0)],
+        .y = b_vector[matrix_index(x, y, dim, 1)]};
+
+    return (vN + vS + vE + vW + (vC * alpha)) * beta;
+}

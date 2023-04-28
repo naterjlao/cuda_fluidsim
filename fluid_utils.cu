@@ -94,20 +94,3 @@ __host__ __device__ void neighbors(
     vW->y = (x > 0) ? data[matrix_index(x - 1, y, dim, 1)] : vC.y;
 }
 
-__host__ __device__ Vector jacobi(
-    const size_t x, const size_t y,
-    const float *x_vector,
-    const float *b_vector,
-    const MatrixDim dim,
-    const float alpha,
-    const float beta)
-{    
-    Vector vN, vS, vE, vW;
-    neighbors(x, y, x_vector, dim, &vN, &vS, &vE, &vW);
-
-    const Vector vC = {
-        .x = b_vector[matrix_index(x, y, dim, 0)],
-        .y = b_vector[matrix_index(x, y, dim, 1)]};
-
-    return (vN + vS + vE + vW + (vC * alpha)) * beta;
-}
