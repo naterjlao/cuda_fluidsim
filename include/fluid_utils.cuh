@@ -35,4 +35,12 @@ __host__ __device__ void neighbors(
     const size_t x, const size_t y,
     const float *data, const MatrixDim dim,
     Vector *vN, Vector *vS, Vector *vE, Vector *vW);
+
+__host__ __device__ Vector jacobi(
+    const size_t x, const size_t y,
+    const float *x_vector,
+    const float *b_vector,
+    const MatrixDim dim,
+    const float alpha,
+    const float beta);
 #endif
