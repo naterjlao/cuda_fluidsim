@@ -97,20 +97,19 @@ void test_ND_dim()
 void test_advect()
 {
     size_t idx, jdx;
-    const size_t nRows = 5;
-    const size_t nCols = 5;
+    MatrixDim dim = {5,5,2};
 
     dim3 dimBlock(32,32); // This is the maximum as per CUDA 2.x
     dim3 dimGrid2( // Method of calculating the number of blocks to use
-        (nCols + dimBlock.x - 1) / dimBlock.x,
-        (nRows + dimBlock.y - 1) / dimBlock.y);
+        (dim.x + dimBlock.x - 1) / dimBlock.x,
+        (dim.y + dimBlock.y - 1) / dimBlock.y);
 #if 0
     dim3 dimGrid3( // Method of calculating the number of blocks to use
-        (nCols + dimBlock.x - 1) / dimBlock.x,
-        (nRows + dimBlock.y - 1) / dimBlock.y,
+        (dim.x + dimBlock.x - 1) / dimBlock.x,
+        (dim.y + dimBlock.y - 1) / dimBlock.y,
         2);
 #endif
-    float pdata[nRows][nCols][2] =
+    float pdata[dim.y][dim.x][2] =
     {
         {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
         {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}},
@@ -122,29 +121,29 @@ void test_advect()
     cudaMalloc(&ddata, sizeof(pdata));
 
     cudaMemcpy(ddata, pdata, sizeof(pdata), cudaMemcpyHostToDevice);
-    kernel_advect<<<dimGrid2, dimBlock>>>(nCols, nRows, ddata, ddata, 5, 0.1);
+    kernel_advect<<<dimGrid2, dimBlock>>>(dim, ddata, ddata, 5, 0.1);
     cudaMemcpy(pdata, ddata, sizeof(pdata), cudaMemcpyDeviceToHost);
-    for ( idx = 0; idx < nRows; idx++)
+    for ( idx = 0; idx < dim.y; idx++)
     {
-        for ( jdx = 0; jdx < nCols; jdx++)
+        for ( jdx = 0; jdx < dim.x; jdx++)
         {
             printf("(%f, %f) ", pdata[idx][jdx][0], pdata[idx][jdx][1]);
         }
         printf("\n");
     }
 
-    unsigned int bgr[nRows][nCols];
+    unsigned int bgr[dim.y][dim.x];
     memset(bgr, 0, sizeof(bgr));
     unsigned int *dbgr;
     cudaMalloc(&dbgr, sizeof(bgr));
 
     cudaMemcpy(dbgr, bgr, sizeof(bgr), cudaMemcpyHostToDevice);
-    kernel_gradient<<<dimGrid2, dimBlock>>>(ddata, dbgr, nCols, nRows);
+    kernel_gradient<<<dimGrid2, dimBlock>>>(ddata, dbgr, dim);
     cudaMemcpy(bgr, dbgr, sizeof(bgr), cudaMemcpyDeviceToHost);
 
-    for ( idx = 0; idx < nRows; idx++)
+    for ( idx = 0; idx < dim.y; idx++)
     {
-        for ( jdx = 0; jdx < nCols; jdx++)
+        for ( jdx = 0; jdx < dim.x; jdx++)
         {
             printf("0x%X ", bgr[idx][jdx]);
         }
