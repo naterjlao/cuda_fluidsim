@@ -35,6 +35,15 @@ __host__ __device__ Vector divergence(
     const MatrixDim dim,
     const float halfrdx);
 
+__global__ void kernel_jacobi(
+    const MatrixDim dim,
+    const float *X,
+    const float *B,
+    float *X_new,
+    const float alpha,
+    const float beta,
+    const size_t iterations=1);
+
 __host__ __device__ Vector jacobi(
     const size_t x, const size_t y,
     const float *x_vector,

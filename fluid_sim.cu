@@ -84,6 +84,28 @@ __host__ __device__ Vector divergence(
   return div;
 }
 
+__global__ void kernel_jacobi(
+    const MatrixDim dim,
+    const float *X,
+    const float *B,
+    float *X_new,
+    const float alpha,
+    const float beta,
+    const size_t iterations)
+{
+  const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
+  if ((x < dim.x) && (y < dim.y))
+  {
+    for (size_t iter = 0; iter < iterations; iter++)
+    {
+      Vector x_new = jacobi(x, y, X, B, dim, alpha, beta);
+      X_new[matrix_index(x, y, dim, 0)] = x_new.x;
+      X_new[matrix_index(x, y, dim, 1)] = x_new.x;
+    }
+  }
+}
+
 __host__ __device__ Vector jacobi(
     const size_t x, const size_t y,
     const float *x_vector,
