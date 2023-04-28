@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <math.h>
 #include "include/fluid_utils.cuh"
 
@@ -37,7 +38,7 @@ __host__ __device__ bool bilinear_interpolation(
     bool retval = false;
 
     /// @todo check lower bounds
-    if ((idx_hi < dim.y) && (idy_hi < dim.y))
+    if ((idx_hi < dim.x) && (idy_hi < dim.y))
     {
         const float factor_h = px - floor(px); // Horizontal Ratio Factor
         const float factor_v = py - floor(py); // Vertical Ratio Factor
@@ -73,24 +74,26 @@ __host__ __device__ void neighbors(
     const float *data, const MatrixDim dim,
     Vector *vN, Vector *vS, Vector *vE, Vector *vW)
 {
-    const Vector vC = {
-        .x = data[matrix_index(x, y, dim, 0)],
-        .y = data[matrix_index(x, y, dim, 1)]};
+    if ((x < dim.x) && (y < dim.y))
+    {
+        const Vector vC = {
+            .x = data[matrix_index(x, y, dim, 0)],
+            .y = data[matrix_index(x, y, dim, 1)]};
 
-    // North Neighbor Vector
-    vN->x = (y > 0) ? data[matrix_index(x, y - 1, dim, 0)] : vC.x;
-    vN->y = (y > 0) ? data[matrix_index(x, y - 1, dim, 1)] : vC.y;
+        // North Neighbor Vector
+        vN->x = (y > 0) ? data[matrix_index(x, y - 1, dim, 0)] : vC.x;
+        vN->y = (y > 0) ? data[matrix_index(x, y - 1, dim, 1)] : vC.y;
 
-    // South Neighbor Vector
-    vS->x = (y < dim.y - 1) ? data[matrix_index(x, y + 1, dim, 0)] : vC.x;
-    vS->y = (y < dim.y - 1) ? data[matrix_index(x, y + 1, dim, 1)] : vC.y;
+        // South Neighbor Vector
+        vS->x = (y < (dim.y - 1)) ? data[matrix_index(x, y + 1, dim, 0)] : vC.x;
+        vS->y = (y < (dim.y - 1)) ? data[matrix_index(x, y + 1, dim, 1)] : vC.y;
 
-    // East Neighbor Vector
-    vE->x = (x < dim.x - 1) ? data[matrix_index(x + 1, y, dim, 0)] : vC.x;
-    vE->y = (x < dim.x - 1) ? data[matrix_index(x + 1, y, dim, 1)] : vC.y;
+        // East Neighbor Vector
+        vE->x = (x < (dim.x - 1)) ? data[matrix_index(x + 1, y, dim, 0)] : vC.x;
+        vE->y = (x < (dim.x - 1)) ? data[matrix_index(x + 1, y, dim, 1)] : vC.y;
 
-    // West Neighbor Vector
-    vW->x = (x > 0) ? data[matrix_index(x - 1, y, dim, 0)] : vC.x;
-    vW->y = (x > 0) ? data[matrix_index(x - 1, y, dim, 1)] : vC.y;
+        // West Neighbor Vector
+        vW->x = (x > 0) ? data[matrix_index(x - 1, y, dim, 0)] : vC.x;
+        vW->y = (x > 0) ? data[matrix_index(x - 1, y, dim, 1)] : vC.y;
+    }
 }
-

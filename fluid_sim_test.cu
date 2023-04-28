@@ -176,7 +176,7 @@ void test_neighbors()
             {{0.0, 0.0}, {0.0, 25.0}, {0.0, 0.0}},
         };
 
-    neighbors(1, 1, (float *)data, dim, &vN, &vS, &vE, &vW);
+    neighbors(0, 3, (float *)data, dim, &vN, &vS, &vE, &vW);
 
     printf("vN %f %f\n", vN.x, vN.y);
     printf("vS %f %f\n", vS.x, vS.y);
@@ -204,7 +204,7 @@ int main()
     // test_ND_dim();
     // test_advect();
     // test_bilinear_interpolation();
-    //test_neighbors();
-    test_jacobi();
+    test_neighbors();
+    //test_jacobi();
     return 0;
 }
