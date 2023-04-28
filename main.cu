@@ -59,16 +59,14 @@ int main()
         (DIMENSIONS.x + DIM_BLOCK.x - 1) / DIM_BLOCK.x,
         (DIMENSIONS.y + DIM_BLOCK.y - 1) / DIM_BLOCK.y);
 
-    // Setup host pressure field
-    float *h_pfield;
-    cudaMallocHost(&h_pfield, FIELD_SIZE);
-    initialize_p_field(h_pfield, DIMENSIONS);
+    // Setup host velocity field
+    float *h_vfield;
+    cudaMallocHost(&h_vfield, FIELD_SIZE);
+    initialize_p_field(h_vfield, DIMENSIONS);
 
-    // Setup device pressure field
-    float *d_pfield;
-    float *d_pfield_temp;
-    cudaMalloc(&d_pfield, FIELD_SIZE);
-    cudaMalloc(&d_pfield_temp, FIELD_SIZE);
+    // Setup device velocity field
+    float *d_vfield;
+    cudaMalloc(&d_vfield, FIELD_SIZE);
 
     // Setup host image matrix
     unsigned int *h_bgr;
@@ -84,40 +82,15 @@ int main()
     size_t temp = 0;
     while (true)
     {
-        cudaMemcpy(d_pfield, h_pfield, FIELD_SIZE, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_pfield_temp, d_pfield, FIELD_SIZE, cudaMemcpyDeviceToDevice);
-        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_pfield_temp,RDX,TIMESTEP,0.8);
-        cudaMemcpy(d_pfield, d_pfield_temp, FIELD_SIZE, cudaMemcpyDeviceToDevice);
-        kernel_gradient<<<DIM_GRID, DIM_BLOCK>>>(d_pfield, d_bgr, DIMENSIONS);
-        cudaMemcpy(h_pfield, d_pfield, FIELD_SIZE, cudaMemcpyDeviceToHost);
+        cudaMemcpy(d_vfield, h_vfield, FIELD_SIZE, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_vfield, d_vfield, FIELD_SIZE, cudaMemcpyDeviceToDevice);
+        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_vfield,d_vfield,RDX,TIMESTEP,0.8);
+        kernel_gradient<<<DIM_GRID, DIM_BLOCK>>>(d_vfield, d_bgr, DIMENSIONS);
+        cudaMemcpy(h_vfield, d_vfield, FIELD_SIZE, cudaMemcpyDeviceToHost);
         cudaMemcpy(h_bgr, d_bgr, BGR_SIZE, cudaMemcpyDeviceToHost);
         cudaDeviceSynchronize();
 
         image = cv::Mat(DIMENSIONS.y, DIMENSIONS.x, CV_8UC4, (unsigned *)h_bgr);
-#if 0
-        for (size_t idx = 0; idx < N_ELEMENTS; idx++)
-        {
-            printf("%x\n",h_bgr[idx]);
-        }
-#endif
-#if 0
-        printf("iteration: %d\n",temp);
-        for (size_t idx = 0; idx < N_ELEMENTS; idx++)
-        {
-            printf("(%f %f) ", h_pfield[idx * 2], h_pfield[idx * 2+1]);
-            if (idx % WIDTH == 0)
-                printf("\n");
-        }
-        for (size_t idx = 0; idx < N_ELEMENTS; idx++)
-        {
-            printf("0x%x ", h_bgr[idx]);
-            if (idx % WIDTH == 0)
-                printf("\n");
-        }
-#endif
-        // printf("0x%X\n",normalized2bgr(1.0));
-        //printf("0x%X\n", data[1]);
-        //printf("%f\n",rand_norm_scalar());
 
         cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
         cv::imshow("Display Image", image);
@@ -126,7 +99,7 @@ int main()
         if (temp > 100)
         {
             temp = 0;
-            initialize_p_field(h_pfield, DIMENSIONS);
+            initialize_p_field(h_vfield, DIMENSIONS);
         }
         else
         {
@@ -134,8 +107,8 @@ int main()
         }
     }
 
-    cudaFree(h_pfield);
-    cudaFree(d_pfield);
+    cudaFree(h_vfield);
+    cudaFree(d_vfield);
     cudaFree(h_bgr);
     return 0;
 }
