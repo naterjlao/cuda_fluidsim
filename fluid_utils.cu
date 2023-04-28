@@ -106,8 +106,8 @@ __host__ __device__ Vector jacobi(
     neighbors(x, y, x_vector, dim, &vN, &vS, &vE, &vW);
 
     const Vector vC = {
-        .x = x_vector[matrix_index(x, y, dim, 0)],
-        .y = x_vector[matrix_index(x, y, dim, 1)]};
+        .x = b_vector[matrix_index(x, y, dim, 0)],
+        .y = b_vector[matrix_index(x, y, dim, 1)]};
 
     return (vN + vS + vE + vW + (vC * alpha)) * beta;
 }
