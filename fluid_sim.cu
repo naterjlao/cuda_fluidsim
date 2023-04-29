@@ -101,7 +101,7 @@ __global__ void kernel_jacobi(
     {
       Vector x_new = jacobi(x, y, X, B, dim, alpha, beta);
       X_new[matrix_index(x, y, dim, 0)] = x_new.x;
-      X_new[matrix_index(x, y, dim, 1)] = x_new.x;
+      X_new[matrix_index(x, y, dim, 1)] = x_new.y;
     }
   }
 }

@@ -45,7 +45,7 @@ int main()
     const float RDX = 256.0;
 
     // Simulation timestep
-    const float TIMESTEP = 0.01;
+    const float TIMESTEP = 0.05;
 
     // Rendering frame rate (milliseconds)
     const int FRAMERATE = 1;
@@ -94,7 +94,7 @@ int main()
     size_t temp = 0;
     while (true)
     {
-        cudaMemcpy(d_vfield, h_vfield, FIELD_SIZE, cudaMemcpyHostToDevice);
+        //cudaMemcpy(d_vfield, h_vfield, FIELD_SIZE, cudaMemcpyHostToDevice);
         cudaMemset(d_pfield,0, FIELD_SIZE);
 
         kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_vfield,d_vfield,RDX,TIMESTEP,0.999);
@@ -108,7 +108,7 @@ int main()
         cudaMemcpy(h_pbgr, d_pbgr, BGR_SIZE, cudaMemcpyDeviceToHost);
         cudaMemcpy(h_dbgr, d_dbgr, BGR_SIZE, cudaMemcpyDeviceToHost);
 
-        cudaMemcpy(h_vfield, d_vfield, FIELD_SIZE, cudaMemcpyDeviceToHost);
+        //cudaMemcpy(h_vfield, d_vfield, FIELD_SIZE, cudaMemcpyDeviceToHost);
         //cudaDeviceSynchronize();
 
         vimage = cv::Mat(DIMENSIONS.y, DIMENSIONS.x, CV_8UC4, (unsigned *)h_vbgr);
@@ -122,7 +122,8 @@ int main()
         if (temp > 100)
         {
             temp = 0;
-            initialize_p_field(h_vfield, DIMENSIONS);
+            //initialize_p_field(h_vfield, DIMENSIONS);
+            kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS.x/2, DIMENSIONS.y /2,d_vfield,DIMENSIONS);
         }
         else
         {

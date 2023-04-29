@@ -1,4 +1,5 @@
 #include <math.h>
+#include <curand.h>
 #include "include/gradient.cuh"
 #include "include/fluid_utils.cuh"
 
@@ -25,3 +26,18 @@ __global__ void kernel_gradient(
     }
 }
 
+__global__ void kernel_pulse(
+    const size_t epicenter_x, const size_t epicenter_y,
+    float *field, const MatrixDim dim)
+{
+    const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x < dim.x && y < dim.y)
+    {
+        //field[matrix_index(x,y,dim,0)] = (-1.0) *((float) (x - epicenter_x)) / ((float ) epicenter_x);
+        //field[matrix_index(x,y,dim,0)] = -1.0;
+        field[matrix_index(x,y,dim,0)] += (x == epicenter_x) ? 0.0 : 1.0 / (((float) (x)) - ((float) epicenter_x));
+        field[matrix_index(x,y,dim,1)] += (y == epicenter_y) ? 0.0 : 1.0 / (((float) (y)) - ((float) epicenter_y));
+        //field[matrix_index(x,y,dim,1)] = 2.0 ;
+    }
+}
