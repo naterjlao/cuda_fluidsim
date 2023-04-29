@@ -6,6 +6,7 @@
 #include "include/fluid_sim.cuh"
 #include "include/fluid_utils.cuh"
 
+#if 0
 static float rand_norm_scalar()
 {
     float retval = (float) rand() / (float) RAND_MAX + 1.0;
@@ -35,6 +36,28 @@ static __host__ void initialize_p_field(float *data, const MatrixDim dim)
         }
     }
 }
+#endif
+
+struct Coordinate
+{
+    size_t x;
+    size_t y;
+};
+static Coordinate pulse_coordinate;
+static bool pulse = false;
+
+void mouse_pulse(int event, int x, int y, int flags, void *coordinate)
+{
+    switch (event)
+    {
+    case cv::EVENT_LBUTTONDOWN:
+        //printf("EVENT_LBUTTONDOWN\n");
+        pulse_coordinate.x = x;
+        pulse_coordinate.y = y;
+        pulse = true;
+        break;
+    }
+}
 
 int main()
 {
@@ -59,7 +82,7 @@ int main()
     // Setup host velocity field
     float *h_vfield;
     cudaMallocHost(&h_vfield, FIELD_SIZE);
-    initialize_p_field(h_vfield, DIMENSIONS);
+    //initialize_p_field(h_vfield, DIMENSIONS);
 
     // Setup device velocity, pressure and divergence field
     float *d_vfield;
@@ -91,6 +114,8 @@ int main()
     cv::namedWindow("Velocity", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Pressure", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Divergence", cv::WINDOW_AUTOSIZE);
+
+    cv::setMouseCallback("Velocity", mouse_pulse, 0);
     size_t temp = 0;
     while (true)
     {
@@ -119,6 +144,13 @@ int main()
         cv::imshow("Divergence", dimage);
         cv::waitKey(FRAMERATE);
 
+        if (pulse)
+        {
+            kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(pulse_coordinate.x, pulse_coordinate.y,d_vfield,DIMENSIONS);
+            pulse = false;
+        }
+
+#if 0
         if (temp > 100)
         {
             temp = 0;
@@ -129,6 +161,7 @@ int main()
         {
             temp++;
         }
+#endif
     }
 
     cudaFree(h_vfield);
