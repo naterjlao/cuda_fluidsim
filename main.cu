@@ -6,38 +6,6 @@
 #include "include/fluid_sim.cuh"
 #include "include/fluid_utils.cuh"
 
-#if 0
-static float rand_norm_scalar()
-{
-    float retval = (float) rand() / (float) RAND_MAX + 1.0;
-    retval = retval * ((rand() % 2 > 0) ? 1.0 : -1.0);
-    return retval;
-}
-
-static __host__ void initialize_p_field(float *data, const MatrixDim dim)
-{
-    const size_t radius = 300;
-    const size_t x_lower = dim.x/2 - radius;
-    const size_t x_upper = dim.x/2 + radius;
-    const size_t y_lower = dim.y/2 - radius;
-    const size_t y_upper = dim.y/2 + radius;
-
-    for (size_t y = y_lower; y < y_upper; y++)
-    {
-        for (size_t x = x_lower; x < x_upper; x++)
-        {
-#if 1
-            data[matrix_index(x,y,dim,0)] = 2.0 * rand_norm_scalar();
-            data[matrix_index(x,y,dim,1)] = 2.0;// * rand_norm_scalar();
-#else
-            data[matrix_index(x,y,dim,0)] = rand_norm_scalar();
-            data[matrix_index(x,y,dim,1)] = rand_norm_scalar();
-#endif
-        }
-    }
-}
-#endif
-
 struct Coordinate
 {
     size_t x;
@@ -48,20 +16,22 @@ static bool pulse = false;
 
 void mouse_pulse(int event, int x, int y, int flags, void *coordinate)
 {
+    pulse_coordinate.x = x;
+    pulse_coordinate.y = y;
     switch (event)
     {
     case cv::EVENT_LBUTTONDOWN:
-        //printf("EVENT_LBUTTONDOWN\n");
-        pulse_coordinate.x = x;
-        pulse_coordinate.y = y;
         pulse = true;
+        break;
+    case cv::EVENT_LBUTTONUP:
+        pulse = false;
         break;
     }
 }
 
 int main()
 {
-    const MatrixDim DIMENSIONS = {768, 768, 2};
+    const MatrixDim DIMENSIONS = {1024, 1024, 2};
     const size_t N_ELEMENTS = DIMENSIONS.x * DIMENSIONS.y;
     const size_t FIELD_SIZE = sizeof(float) * N_ELEMENTS * DIMENSIONS.vl;
     const size_t BGR_SIZE = sizeof(unsigned int) * N_ELEMENTS;
@@ -82,7 +52,6 @@ int main()
     // Setup host velocity field
     float *h_vfield;
     cudaMallocHost(&h_vfield, FIELD_SIZE);
-    //initialize_p_field(h_vfield, DIMENSIONS);
 
     // Setup device velocity, pressure and divergence field
     float *d_vfield;
@@ -112,14 +81,12 @@ int main()
     cv::Mat pimage;
     cv::Mat dimage;
     cv::namedWindow("Velocity", cv::WINDOW_AUTOSIZE);
-    cv::namedWindow("Pressure", cv::WINDOW_AUTOSIZE);
-    cv::namedWindow("Divergence", cv::WINDOW_AUTOSIZE);
+    //cv::namedWindow("Pressure", cv::WINDOW_AUTOSIZE);
+    //cv::namedWindow("Divergence", cv::WINDOW_AUTOSIZE);
 
     cv::setMouseCallback("Velocity", mouse_pulse, 0);
-    size_t temp = 0;
     while (true)
     {
-        //cudaMemcpy(d_vfield, h_vfield, FIELD_SIZE, cudaMemcpyHostToDevice);
         cudaMemset(d_pfield,0, FIELD_SIZE);
 
         kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_vfield,d_vfield,RDX,TIMESTEP,0.9);
@@ -140,28 +107,15 @@ int main()
         pimage = cv::Mat(DIMENSIONS.y, DIMENSIONS.x, CV_8UC4, (unsigned *)h_pbgr);
         dimage = cv::Mat(DIMENSIONS.y, DIMENSIONS.x, CV_8UC4, (unsigned *)h_dbgr);
         cv::imshow("Velocity", vimage);
-        cv::imshow("Pressure", pimage);
-        cv::imshow("Divergence", dimage);
+        //cv::imshow("Pressure", pimage);
+        //cv::imshow("Divergence", dimage);
         cv::waitKey(FRAMERATE);
 
         if (pulse)
         {
             kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(pulse_coordinate.x, pulse_coordinate.y,d_vfield,DIMENSIONS);
-            pulse = false;
+            //pulse = false;
         }
-
-#if 0
-        if (temp > 100)
-        {
-            temp = 0;
-            //initialize_p_field(h_vfield, DIMENSIONS);
-            kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS.x/2, DIMENSIONS.y /2,d_vfield,DIMENSIONS);
-        }
-        else
-        {
-            temp++;
-        }
-#endif
     }
 
     cudaFree(h_vfield);
