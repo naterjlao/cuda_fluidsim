@@ -198,13 +198,37 @@ void test_jacobi()
     printf("%f %f\n",j.x,j.y);
 }
 
+void test_pulse()
+{
+    const size_t l = 10;
+    const MatrixDim dim = {l,l,2};
+    float *dev;
+    cudaMalloc(&dev,sizeof(float) * dim.x * dim.y * dim.vl);
+    float data[dim.x][dim.y][dim.vl];
+    dim3 dimBlock(32, 32); // This is the maximum as per CUDA 2.x
+    dim3 dimGrid(          // Method of calculating the number of blocks to use
+        (dim.x + dimBlock.x - 1) / dimBlock.x,
+        (dim.y + dimBlock.y - 1) / dimBlock.y);
+    kernel_pulse<<<dimGrid, dimBlock>>>(l/2,l/2,dev, dim);
+    cudaMemcpy(data,dev,sizeof(float) * dim.x * dim.y * dim.vl,cudaMemcpyDeviceToHost);
+    for (size_t idx = 0; idx < dim.y; idx++)
+    {
+        for (size_t jdx = 0; jdx < dim.x; jdx++)
+        {
+            printf("(%.02f,%.02f) ", data[idx][jdx][0], data[idx][jdx][1]);
+        }
+        printf("\n");
+    }
+}
+
 int main()
 {
     // test_2D_dim();
     // test_ND_dim();
     // test_advect();
     // test_bilinear_interpolation();
-    test_neighbors();
+    //test_neighbors();
     //test_jacobi();
+    test_pulse();
     return 0;
 }

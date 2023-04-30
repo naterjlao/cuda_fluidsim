@@ -122,7 +122,7 @@ int main()
         //cudaMemcpy(d_vfield, h_vfield, FIELD_SIZE, cudaMemcpyHostToDevice);
         cudaMemset(d_pfield,0, FIELD_SIZE);
 
-        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_vfield,d_vfield,RDX,TIMESTEP,0.999);
+        kernel_advect<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_vfield,d_vfield,RDX,TIMESTEP,0.9);
         kernel_divergence<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_vfield,d_dfield,RDX/2.0);
         kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,d_pfield,-1.0,0.25,20);
 
