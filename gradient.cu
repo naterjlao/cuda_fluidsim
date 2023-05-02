@@ -3,7 +3,7 @@
 #include "include/gradient.cuh"
 #include "include/fluid_utils.cuh"
 
-__global__ void kernel_gradient(
+__global__ void kernel_vfield2bgr(
     const float *field,
     unsigned int *bgr,
     const MatrixDim dim)

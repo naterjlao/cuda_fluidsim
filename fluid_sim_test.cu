@@ -136,7 +136,7 @@ void test_advect()
     cudaMalloc(&dbgr, sizeof(bgr));
 
     cudaMemcpy(dbgr, bgr, sizeof(bgr), cudaMemcpyHostToDevice);
-    kernel_gradient<<<dimGrid2, dimBlock>>>(ddata, dbgr, dim);
+    kernel_vfield2bgr<<<dimGrid2, dimBlock>>>(ddata, dbgr, dim);
     cudaMemcpy(bgr, dbgr, sizeof(bgr), cudaMemcpyDeviceToHost);
 
     for (idx = 0; idx < dim.y; idx++)
