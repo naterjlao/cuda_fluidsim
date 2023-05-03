@@ -165,7 +165,7 @@ void test_bilinear_interpolation()
     printf("%f, %f\n", vx, vy);
 }
 
-void test_neighbors()
+void test_neighbors_vector()
 {
     Vector vN, vS, vE, vW;
     const MatrixDim dim = {3, 3, 2};
@@ -176,7 +176,7 @@ void test_neighbors()
             {{0.0, 0.0}, {0.0, 25.0}, {0.0, 0.0}},
         };
 
-    neighbors(0, 3, (float *)data, dim, &vN, &vS, &vE, &vW);
+    neighbors_vector(0, 3, (float *)data, dim, &vN, &vS, &vE, &vW);
 
     printf("vN %f %f\n", vN.x, vN.y);
     printf("vS %f %f\n", vS.x, vS.y);

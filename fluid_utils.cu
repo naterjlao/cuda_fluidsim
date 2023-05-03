@@ -69,7 +69,7 @@ __host__ __device__ bool bilinear_interpolation(
     return retval;
 }
 
-__host__ __device__ void neighbors(
+__host__ __device__ void neighbors_vector(
     const size_t x, const size_t y,
     const float *data, const MatrixDim dim,
     Vector *vN, Vector *vS, Vector *vE, Vector *vW)
@@ -95,5 +95,28 @@ __host__ __device__ void neighbors(
         // West Neighbor Vector
         vW->x = (x > 0) ? data[matrix_index(x - 1, y, dim, 0)] : vC.x;
         vW->y = (x > 0) ? data[matrix_index(x - 1, y, dim, 1)] : vC.y;
+    }
+}
+
+__host__ __device__ void neighbors_scalar(
+    const size_t x, const size_t y,
+    const float *data, const MatrixDim dim,
+    float *sN, float *sS, float *sE, float *sW)
+{
+    if ((x < dim.x) && (y < dim.y))
+    {
+        const float sC = data[y * dim.x + x];
+
+        // North Neighbor Vector
+        *sN = (y > 0) ? data[(y - 1) * dim.x + x] : sC;
+
+        // South Neighbor Vector
+        *sS = (y < (dim.y - 1)) ? data[(y + 1) * dim.x + x] : sC;
+
+        // East Neighbor Vector
+        *sE = (x < (dim.x - 1)) ? data[y * dim.x + (x + 1)] : sC;
+
+        // West Neighbor Vector
+        *sW = (x > 0) ? data[y * dim.x + (x - 1)] : sC;
     }
 }

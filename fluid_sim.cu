@@ -53,6 +53,14 @@ __host__ __device__ void advect(
   bilinear_interpolation(px, py, d_matrix, dim, dx_new, dy_new);
 }
 
+//-----------------------------------------------------------------------------
+/// @brief
+/// @param dim Dimension Specification for Vector Field.
+/// @param velocity Input VECTOR Velocity Field
+/// @param div Output SCALAR Divergence Field
+/// @param halfrdx Divergence Factor Constant
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_divergence(
     const MatrixDim dim,
     const float *velocity,
@@ -63,32 +71,26 @@ __global__ void kernel_divergence(
   const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
   if ((x < dim.x) && (y < dim.y))
   {
-    Vector v_div = divergence(x, y, velocity, dim, halfrdx);
-    div[matrix_index(x, y, dim, 0)] = v_div.x;
-    div[matrix_index(x, y, dim, 1)] = v_div.y;
+    div[y * dim.x + x] = divergence(x, y, velocity, dim, halfrdx);
   }
 }
-__host__ __device__ Vector divergence(
+
+__host__ __device__ float divergence(
     const size_t x, const size_t y,
     const float *data,
     const MatrixDim dim,
     const float halfrdx)
 {
   Vector vN, vS, vE, vW;
-  neighbors(x, y, data, dim, &vN, &vS, &vE, &vW);
+  neighbors_vector(x, y, data, dim, &vN, &vS, &vE, &vW);
 
-  Vector div;
-  div.x = halfrdx * (vE.x - vW.x);
-  div.y = halfrdx * (vS.y - vN.y);
-
-  return div;
+  return halfrdx * (vE.x - vW.x + vS.y - vN.y);
 }
 
 __global__ void kernel_jacobi(
     const MatrixDim dim,
-    const float *X,
+    float *X,
     const float *B,
-    float *X_new,
     const float alpha,
     const float beta,
     const size_t iterations)
@@ -99,27 +101,22 @@ __global__ void kernel_jacobi(
   {
     for (size_t iter = 0; iter < iterations; iter++)
     {
-      Vector x_new = jacobi(x, y, X, B, dim, alpha, beta);
-      X_new[matrix_index(x, y, dim, 0)] = x_new.x;
-      X_new[matrix_index(x, y, dim, 1)] = x_new.y;
+      X[y * dim.x + x] = jacobi(x, y, X, B, dim, alpha, beta);
     }
   }
 }
 
-__host__ __device__ Vector jacobi(
+__host__ __device__ float jacobi(
     const size_t x, const size_t y,
-    const float *x_vector,
-    const float *b_vector,
+    const float *X,
+    const float *B,
     const MatrixDim dim,
     const float alpha,
     const float beta)
 {
-  Vector vN, vS, vE, vW;
-  neighbors(x, y, x_vector, dim, &vN, &vS, &vE, &vW);
+  float sN, sS, sE, sW;
+  neighbors_scalar(x, y, X, dim, &sN, &sS, &sE, &sW);
+  const float sB = B[y * dim.x + x];
 
-  const Vector vB = {
-      .x = b_vector[matrix_index(x, y, dim, 0)],
-      .y = b_vector[matrix_index(x, y, dim, 1)]};
-
-  return (vN + vS + vE + vW + (vB * alpha)) * beta;
+  return (sN + sS + sE + sW + alpha * sB) * beta;
 }

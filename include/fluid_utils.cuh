@@ -31,10 +31,14 @@ __host__ __device__ bool bilinear_interpolation(
     const float *data, const MatrixDim dim,
     float *vx, float *vy);
 
-__host__ __device__ void neighbors(
+__host__ __device__ void neighbors_vector(
     const size_t x, const size_t y,
     const float *data, const MatrixDim dim,
     Vector *vN, Vector *vS, Vector *vE, Vector *vW);
 
+__host__ __device__ void neighbors_scalar(
+    const size_t x, const size_t y,
+    const float *data, const MatrixDim dim,
+    float *sN, float *sS, float *sE, float *sW);
 
 #endif

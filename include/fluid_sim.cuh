@@ -29,7 +29,7 @@ __global__ void kernel_divergence(
     float *div,
     const float halfrdx);
 
-__host__ __device__ Vector divergence(
+__host__ __device__ float divergence(
     const size_t x, const size_t y,
     const float *data,
     const MatrixDim dim,
@@ -37,17 +37,16 @@ __host__ __device__ Vector divergence(
 
 __global__ void kernel_jacobi(
     const MatrixDim dim,
-    const float *X,
+    float *X,
     const float *B,
-    float *X_new,
     const float alpha,
     const float beta,
     const size_t iterations=1);
 
-__host__ __device__ Vector jacobi(
+__host__ __device__ float jacobi(
     const size_t x, const size_t y,
-    const float *x_vector,
-    const float *b_vector,
+    const float *X,
+    const float *B,
     const MatrixDim dim,
     const float alpha,
     const float beta);
