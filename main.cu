@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/gradient.cuh"
+#include "include/window_utils.cuh"
 #include "include/fluid_sim.cuh"
 #include "include/fluid_utils.cuh"
 

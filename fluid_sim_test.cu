@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "include/fluid_sim.cuh"
-#include "include/gradient.cuh"
+#include "include/window_utils.cuh"
 #include "include/fluid_utils.cuh"
 
 __global__ void thread_idx_2D(size_t *buffer, const size_t nCols)

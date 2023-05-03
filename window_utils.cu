@@ -1,6 +1,6 @@
 #include <math.h>
 #include <curand.h>
-#include "include/gradient.cuh"
+#include "include/window_utils.cuh"
 #include "include/fluid_utils.cuh"
 
 __global__ void kernel_vfield2bgr(
