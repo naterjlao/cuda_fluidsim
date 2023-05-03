@@ -1,48 +1,51 @@
 CUDA_ARCH=sm_86
 OPENCV_ARGS=`pkg-config --cflags opencv` `pkg-config --libs opencv`
 INCLUDE=./include
-EXECUTABLES=main fluid_sim_test
+OBJDIR=./build
+BINDIR=./bin
+EXECUTABLES=$(BINDIR)/main $(BINDIR)/fluid_sim_test
 
 ################### EXECUTABLES ###################
 
 all: $(EXECUTABLES)
 
-main: main.o window_utils.o fluid_sim.o fluid_utils.o
+$(BINDIR)/main: $(OBJDIR)/main.o $(OBJDIR)/window_utils.o $(OBJDIR)/fluid_sim.o $(OBJDIR)/fluid_utils.o
 	nvcc -arch=$(CUDA_ARCH) $(OPENCV_ARGS) \
-		main.o \
-		window_utils.o \
-		fluid_sim.o \
-		fluid_utils.o \
-		-o main
+		$(OBJDIR)/main.o \
+		$(OBJDIR)/window_utils.o \
+		$(OBJDIR)/fluid_sim.o \
+		$(OBJDIR)/fluid_utils.o \
+		-o $(BINDIR)/main
 
-fluid_sim_test: fluid_sim_test.o fluid_sim.o window_utils.o fluid_utils.o
+$(BINDIR)/fluid_sim_test: $(OBJDIR)/fluid_sim_test.o $(OBJDIR)/fluid_sim.o $(OBJDIR)/window_utils.o $(OBJDIR)/fluid_utils.o
 	nvcc -arch=$(CUDA_ARCH) \
-		fluid_sim_test.o \
-		fluid_sim.o \
-		window_utils.o \
-		fluid_utils.o \
-		-o fluid_sim_test
+		$(OBJDIR)/fluid_sim_test.o \
+		$(OBJDIR)/fluid_sim.o \
+		$(OBJDIR)/window_utils.o \
+		$(OBJDIR)/fluid_utils.o \
+		-o $(BINDIR)/fluid_sim_test
 
 ################### OBJECTS ###################
 
-main.o: main.cu
-	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc main.cu
+$(OBJDIR)/main.o: main.cu
+	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc main.cu -o $@
 
-window_utils.o: window_utils.cu $(INCLUDE)/window_utils.cuh
-	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc window_utils.cu
+$(OBJDIR)/window_utils.o: window_utils.cu $(INCLUDE)/window_utils.cuh
+	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc window_utils.cu -o $@
 
-fluid_sim_test.o: fluid_sim_test.cu
-	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_sim_test.cu
+$(OBJDIR)/fluid_sim_test.o: fluid_sim_test.cu
+	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_sim_test.cu -o $@
 
-fluid_sim.o: fluid_sim.cu $(INCLUDE)/fluid_sim.cuh
-	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_sim.cu
+$(OBJDIR)/fluid_sim.o: fluid_sim.cu $(INCLUDE)/fluid_sim.cuh
+	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_sim.cu -o $@
 
-fluid_utils.o: fluid_utils.cu $(INCLUDE)/fluid_utils.cuh
-	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_utils.cu
+$(OBJDIR)/fluid_utils.o: fluid_utils.cu $(INCLUDE)/fluid_utils.cuh
+	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_utils.cu -o $@
 
 .PHONY: all clean
 clean:
 	rm -rvf $(EXECUTABLES)
 	rm -rvf *.o
+	rm -rvf $(OBJDIR)/*.o
 
 c: clean

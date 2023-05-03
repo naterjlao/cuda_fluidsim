@@ -1,3 +1,6 @@
 main
+bin/main
 fluid_sim_test
+bin/fluid_sim_test
 *.o
+build/*.o
