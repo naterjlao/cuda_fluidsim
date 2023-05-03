@@ -79,7 +79,7 @@ int main()
     cv::Mat pimage;
     cv::namedWindow("Velocity", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Divergence", cv::WINDOW_AUTOSIZE);
-    //cv::namedWindow("Pressure", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("Pressure", cv::WINDOW_AUTOSIZE);
 
     cv::setMouseCallback("Velocity", mouse_pulse, 0);
     while (true)
@@ -91,12 +91,13 @@ int main()
         kernel_divergence<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_vfield,d_dfield,RDX/2.0);
 
         // ----- COMPUTE PRESSURE ----- //
-        //cudaMemset(d_pfield,0, SCALAR_FIELD_SIZE);
-        //kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,-1.0,0.25,20);
+        cudaMemset(d_pfield,0, SCALAR_FIELD_SIZE);
+        kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,1.0,0.25,20);
 
+        // ----- CONVERT TO BGR ----- //
         kernel_vfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_vfield, d_vbgr, DIMENSIONS); // Advection
         kernel_sfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_dfield, d_dbgr, DIMENSIONS); // Divergence
-        //kernel_sfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_pfield, d_pbgr, DIMENSIONS); // Pressure
+        kernel_sfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_pfield, d_pbgr, DIMENSIONS); // Pressure
         cudaMemcpy(h_vbgr, d_vbgr, BGR_SIZE, cudaMemcpyDeviceToHost);
         cudaMemcpy(h_dbgr, d_dbgr, BGR_SIZE, cudaMemcpyDeviceToHost);
         cudaMemcpy(h_pbgr, d_pbgr, BGR_SIZE, cudaMemcpyDeviceToHost);
@@ -106,7 +107,7 @@ int main()
         pimage = cv::Mat(DIMENSIONS.y, DIMENSIONS.x, CV_8UC4, (unsigned *)h_pbgr);
         cv::imshow("Velocity", vimage);
         cv::imshow("Divergence", dimage);
-        //cv::imshow("Pressure", pimage);
+        cv::imshow("Pressure", pimage);
         cv::waitKey(FRAMERATE);
 
         if (pulse)
