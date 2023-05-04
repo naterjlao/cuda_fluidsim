@@ -40,8 +40,7 @@ __global__ void kernel_jacobi(
     float *X,
     const float *B,
     const float alpha,
-    const float beta,
-    const size_t iterations=1);
+    const float beta);
 
 __host__ __device__ float jacobi(
     const size_t x, const size_t y,

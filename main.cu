@@ -92,7 +92,7 @@ int main()
 
         // ----- COMPUTE PRESSURE ----- //
         cudaMemset(d_pfield,0, SCALAR_FIELD_SIZE);
-        kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,1.0,0.25,20);
+        kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,1.0,0.25);
 
         // ----- CONVERT TO BGR ----- //
         kernel_vfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_vfield, d_vbgr, DIMENSIONS); // Advection

@@ -92,17 +92,13 @@ __global__ void kernel_jacobi(
     float *X,
     const float *B,
     const float alpha,
-    const float beta,
-    const size_t iterations)
+    const float beta)
 {
   const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
   if ((x < dim.x) && (y < dim.y))
   {
-    for (size_t iter = 0; iter < iterations; iter++)
-    {
-      X[y * dim.x + x] = jacobi(x, y, X, B, dim, alpha, beta);
-    }
+    X[y * dim.x + x] = jacobi(x, y, X, B, dim, alpha, beta);
   }
 }
 
