@@ -14,6 +14,6 @@ __global__ void kernel_sfield2bgr(
 
 __global__ void kernel_pulse(
     const size_t epicenter_x, const size_t epicenter_y,
-    float *field, const MatrixDim dim);
+    float *field, const MatrixDim dim, const float intensity);
 
 #endif

@@ -36,6 +36,7 @@ int main()
     const size_t SCALAR_FIELD_SIZE = sizeof(float) * DIMENSIONS.x * DIMENSIONS.y;
     const size_t VECTOR_FIELD_SIZE = sizeof(float) * DIMENSIONS.x * DIMENSIONS.y * DIMENSIONS.vl;
     const size_t BGR_SIZE = sizeof(unsigned int) * DIMENSIONS.x * DIMENSIONS.y;
+    const size_t JACOBI_ITERATIONS = 20;
     const float RDX = 256.0;
 
     // Simulation timestep
@@ -92,7 +93,14 @@ int main()
 
         // ----- COMPUTE PRESSURE ----- //
         cudaMemset(d_pfield,0, SCALAR_FIELD_SIZE);
-        kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,1.0,0.25);
+        for (size_t j_iter = 0; j_iter < JACOBI_ITERATIONS; j_iter++)
+        {
+            kernel_sboundary<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS, d_pfield,1.0);
+            kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,1.0,0.25);
+        }
+
+        // ----- COMPUTE BOUNDARIES ----- //
+        kernel_vboundary<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS, d_vfield, -1.0);
 
         // ----- CONVERT TO BGR ----- //
         kernel_vfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_vfield, d_vbgr, DIMENSIONS); // Advection
@@ -112,7 +120,7 @@ int main()
 
         if (pulse)
         {
-            kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(pulse_coordinate.x, pulse_coordinate.y,d_vfield,DIMENSIONS);
+            kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(pulse_coordinate.x, pulse_coordinate.y,d_vfield,DIMENSIONS,0.5);
         }
     }
 

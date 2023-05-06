@@ -49,4 +49,14 @@ __host__ __device__ float jacobi(
     const MatrixDim dim,
     const float alpha,
     const float beta);
+
+__global__ void kernel_sboundary(
+    const MatrixDim dim,
+    float *M,
+    const float scale);
+
+__global__ void kernel_vboundary(
+    const MatrixDim dim,
+    float *M,
+    const float scale);
 #endif
