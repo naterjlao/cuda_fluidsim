@@ -4,3 +4,7 @@ fluid_sim_test
 bin/fluid_sim_test
 *.o
 build/*.o
+*/*.aux
+*/*.log
+*/*.pdf
+.vscode
