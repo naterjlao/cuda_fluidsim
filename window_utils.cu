@@ -1,8 +1,27 @@
+//-----------------------------------------------------------------------------
+/// @file windows_utils.cu
+/// @author Nate Lao (nlao1@jh.edu)
+/// @brief CUDA Fluid Simulation Window Utilities
+//-----------------------------------------------------------------------------
 #include <math.h>
 #include <curand.h>
 #include "include/window_utils.cuh"
 #include "include/fluid_utils.cuh"
 
+//-----------------------------------------------------------------------------
+/// @brief Converts a given vector field to the BGR representation.
+/// @details 
+/// Left-Right forces are mapped to the red channel.
+/// Up-Down forces are mapped to the blue channel.
+/// The intensity of the force is proportional to the intensity of the 
+/// cooresponding channel.
+/// @param field input vector field
+/// @param bgr output bgr image field
+/// @param dim dimension bounds
+/// @return None.
+/// @note This function assumes a little endian respentation of the BGR(A) color
+/// matrix: 0xAARRGGBB
+//-----------------------------------------------------------------------------
 __global__ void kernel_vfield2bgr(
     const float *field,
     unsigned int *bgr,
@@ -26,6 +45,15 @@ __global__ void kernel_vfield2bgr(
     }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Converts a given scalar field to the BGR representation.
+/// @details Negative values cooresponds to the blue channel, while positive
+/// forces cooresponds to the red channel.
+/// @param field input scalar field
+/// @param bgr output bgr image field
+/// @param dim dimension bounds
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_sfield2bgr(
     const float *field,
     unsigned int *bgr,
@@ -47,6 +75,15 @@ __global__ void kernel_sfield2bgr(
     }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Pulses a force to the given vector field.
+/// @param epicenter_x x pulse coordinate
+/// @param epicenter_y y pulse coordinate
+/// @param field output field
+/// @param dim bounding dimensions
+/// @param intensity intensity pulse factor
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_pulse(
     const size_t epicenter_x, const size_t epicenter_y,
     float *field, const MatrixDim dim, float intensity)

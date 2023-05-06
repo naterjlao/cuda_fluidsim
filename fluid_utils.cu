@@ -1,12 +1,26 @@
+//-----------------------------------------------------------------------------
+/// @file fluid_utils.cu
+/// @author Nate Lao (nlao1@jh.edu)
+/// @brief CUDA Fluid Simulation Utilities
+//-----------------------------------------------------------------------------
 #include <stdio.h>
 #include <math.h>
 #include "include/fluid_utils.cuh"
 
+//-----------------------------------------------------------------------------
+/// @brief Computes the Matrix Index for a Multidimensional Vector Matrix
+/// @param[in] x x index coordinate
+/// @param[in] y y index coordinate
+/// @param[in] dim Defines the working space dimension bounds.
+/// @param[in] vc vector component, 0->x/1->y
+/// @return matrix index of the desired vector value.
+//-----------------------------------------------------------------------------
 __host__ __device__ size_t matrix_index(const size_t x, const size_t y, const MatrixDim dim, const size_t vc)
 {
     return (y * dim.x + x) * dim.vl + vc;
 }
 
+//-----------------------------------------------------------------------------
 /// @brief Performs a bilinear interpolation given (px, py) and vector data field.
 /// @details
 /// (idx_lo, idy_lo) --- * ------ (idx_hi, idy_lo)
@@ -16,13 +30,16 @@ __host__ __device__ size_t matrix_index(const size_t x, const size_t y, const Ma
 ///                      |
 ///                      |
 /// (idx_lo, idy_hi) --- * ------ (idx_hi, idy_hi)
-/// @param px x coordinate of interpolation
-/// @param py y coordinate of interpolation
-/// @param data data matrix (see note)
-/// @param vx interpolation of the x-vector component
-/// @param vy interpolation of the y-vector component
+/// @param[in] px x interpolated coordinate
+/// @param[in] py y interpolated coordinate
+/// @param[in] data data matrix (see note)
+/// @param[in] dim Defines the working space dimension bounds.
+/// @param[out] vx interpolation result of x vector component
+/// @param[out] vy interpolation result of the y vector component.
+/// @return None.
 /// @note the data matrix must be defined as a multi-dimensions
 /// array of [dim.y][dim.x][2] (2 is the vector length)
+//-----------------------------------------------------------------------------
 __host__ __device__ void bilinear_interpolation(
     const float px, const float py,
     const float *data, const MatrixDim dim,
@@ -60,6 +77,20 @@ __host__ __device__ void bilinear_interpolation(
     }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Retrieves the bounding neighbor vectors given a coordinate position.
+/// @param[in] x x coordinate
+/// @param[in] y y coordinate
+/// @param[in] data data matrix (see note)
+/// @param[in] dim Defines the working space dimension bounds.
+/// @param[out] vN North Vector
+/// @param[out] vS South Vector
+/// @param[out] vE East Vector
+/// @param[out] vW West Vector
+/// @return None.
+/// @note the data matrix must be defined as a multi-dimensions
+/// array of [dim.y][dim.x][2] (2 is the vector length)
+//-----------------------------------------------------------------------------
 __host__ __device__ void neighbors_vector(
     const size_t x, const size_t y,
     const float *data, const MatrixDim dim,
@@ -89,6 +120,20 @@ __host__ __device__ void neighbors_vector(
     }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Retrieves the bounding neighbor scalar values given a coordinate position.
+/// @param[in] x x coordinate
+/// @param[in] y y coordinate
+/// @param[in] data data matrix (see note)
+/// @param[in] dim Defines the working space dimension bounds.
+/// @param[out] sN North Component
+/// @param[out] sS South Component
+/// @param[out] sE East Component
+/// @param[out] sW West Component
+/// @return None.
+/// @note the data matrix must be defined as a scalar
+/// array of [dim.y][dim.x]
+//-----------------------------------------------------------------------------
 __host__ __device__ void neighbors_scalar(
     const size_t x, const size_t y,
     const float *data, const MatrixDim dim,

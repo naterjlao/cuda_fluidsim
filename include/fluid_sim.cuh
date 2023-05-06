@@ -1,3 +1,8 @@
+//-----------------------------------------------------------------------------
+/// @file fluid_sim.cuh
+/// @author Nate Lao (nlao1@jh.edu)
+/// @brief CUDA Fluid Simulation Computartion Functions
+//-----------------------------------------------------------------------------
 #ifndef __FLUID_SIM_CUH__
 #define __FLUID_SIM_CUH__
 

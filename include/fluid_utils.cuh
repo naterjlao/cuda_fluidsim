@@ -1,3 +1,8 @@
+//-----------------------------------------------------------------------------
+/// @file fluid_utils.cuh
+/// @author Nate Lao (nlao1@jh.edu)
+/// @brief CUDA Fluid Simulation Utilities
+//-----------------------------------------------------------------------------
 #ifndef __FLUID_UTILS_CUH__
 #define __FLUID_UTILS_CUH__
 

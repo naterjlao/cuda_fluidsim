@@ -1,3 +1,8 @@
+//-----------------------------------------------------------------------------
+/// @file windows_utils.cuh
+/// @author Nate Lao (nlao1@jh.edu)
+/// @brief CUDA Fluid Simulation Window Utilities
+//-----------------------------------------------------------------------------
 #ifndef __GRADIENT_CUH__
 #define __GRADIENT_CUH__
 #include "fluid_utils.cuh"

@@ -1,5 +1,20 @@
+//-----------------------------------------------------------------------------
+/// @file fluid_sim.cu
+/// @author Nate Lao (nlao1@jh.edu)
+/// @brief CUDA Fluid Simulation Computartion Functions
+//-----------------------------------------------------------------------------
 #include "include/fluid_sim.cuh"
 
+//-----------------------------------------------------------------------------
+/// @brief Computes the Advection Computation
+/// @param dim Defines the working space dimension bounds.
+/// @param input_data Input Vector Field Matrix
+/// @param output_data Output Vector Field Matrix
+/// @param rdx Divergence Factor Constant
+/// @param timestep Timestep Factor
+/// @param dissipation Dissipation Factor
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_advect(
     const MatrixDim dim,
     const float *input_data,
@@ -23,15 +38,20 @@ __global__ void kernel_advect(
   }
 }
 
-/// @brief
-/// @param dim_x Dimension x size of the input matrices
-/// @param dim_y Dimension y size of the input matrices
-/// @param coord_x Position x coordinate
-/// @param coord_y Position y coordinate
-/// @param timestep Timestep
-/// @param u_matrix Input velocity matrix
-/// @param d_matrix Matrix to apply advection
-/// @return
+//-----------------------------------------------------------------------------
+/// @brief Performs Advection Computation at a specified coordinate.
+/// @param dim Defines the working space dimension bounds.
+/// @param x x coordinate
+/// @param y y coordinate
+/// @param rdx Divergence Factor Constant
+/// @param timestep Timestep Factor
+/// @param dissipation Dissipation Factor
+/// @param u_matrix Input Matrix
+/// @param d_matrix Output Matrix
+/// @param dx_new computed x vector component
+/// @param dy_new computed y vector component
+/// @return None.
+//-----------------------------------------------------------------------------
 __host__ __device__ void advect(
     const MatrixDim dim,
     const size_t x,
@@ -54,8 +74,8 @@ __host__ __device__ void advect(
 }
 
 //-----------------------------------------------------------------------------
-/// @brief
-/// @param dim Dimension Specification for Vector Field.
+/// @brief Computes Divergence Computation
+/// @param dim Defines the working space dimension bounds.
 /// @param velocity Input VECTOR Velocity Field
 /// @param div Output SCALAR Divergence Field
 /// @param halfrdx Divergence Factor Constant
@@ -75,6 +95,15 @@ __global__ void kernel_divergence(
   }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Performs Advection Computation at a specified coordinate.
+/// @param x x coordinate
+/// @param y y coordinate
+/// @param data Input velocity vector field matrix
+/// @param dim Defines the working space dimension bounds.
+/// @param halfrdx rdx factor constant
+/// @return the computed divergence at a given coordinate.
+//-----------------------------------------------------------------------------
 __host__ __device__ float divergence(
     const size_t x, const size_t y,
     const float *data,
@@ -87,6 +116,15 @@ __host__ __device__ float divergence(
   return halfrdx * (vE.x - vW.x + vS.y - vN.y);
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Computes a Jacobi solution step computation.
+/// @param dim Defines the working space dimension bounds.
+/// @param X X vector
+/// @param B B vector
+/// @param alpha alpha constant factor
+/// @param beta beta constant factor
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_jacobi(
     const MatrixDim dim,
     float *X,
@@ -102,6 +140,17 @@ __global__ void kernel_jacobi(
   }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Computes a Jacobi solution step computation at a specific coordinate.
+/// @param x x coordinate
+/// @param y y coordinate
+/// @param X X vector
+/// @param B B vector
+/// @param dim Defines the working space dimension bounds.
+/// @param alpha alpha constant factor
+/// @param beta beta constant factor
+/// @return The jacobi solution at a given point.
+//-----------------------------------------------------------------------------
 __host__ __device__ float jacobi(
     const size_t x, const size_t y,
     const float *X,
@@ -117,6 +166,13 @@ __host__ __device__ float jacobi(
   return (sN + sS + sE + sW + alpha * sB) * beta;
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Computes boundary values.
+/// @param dim Defines the working space dimension bounds.
+/// @param M Scalar Matrix field
+/// @param scale boundary scale factor
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_sboundary(
     const MatrixDim dim,
     float *M,
@@ -163,6 +219,13 @@ __global__ void kernel_sboundary(
   }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Computes boundary values.
+/// @param dim Defines the working space dimension bounds.
+/// @param M Vector Matrix field.
+/// @param scale boundary scale factor
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_vboundary(
     const MatrixDim dim,
     float *M,
@@ -213,6 +276,14 @@ __global__ void kernel_vboundary(
   }
 }
 
+//-----------------------------------------------------------------------------
+/// @brief Subtracts the Pressure Gradient scalars from the Velocity Vector Matrix.
+/// @param dim Defines the working space dimension bounds.
+/// @param P Pressure Scalar Field Matrix
+/// @param V Velocity Vector Field Matrix.
+/// @param halfrdx rdx factor
+/// @return None.
+//-----------------------------------------------------------------------------
 __global__ void kernel_gradient(
     const MatrixDim dim,
     const float *P,
