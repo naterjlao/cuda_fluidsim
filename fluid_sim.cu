@@ -69,7 +69,7 @@ __global__ void kernel_divergence(
 {
   const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
-  if ((x < dim.x) && (y < dim.y))
+  if ((x > 0) && (y > 0) && (x < dim.x - 1) && (y < dim.y - 1))
   {
     div[y * dim.x + x] = divergence(x, y, velocity, dim, halfrdx);
   }
@@ -96,7 +96,7 @@ __global__ void kernel_jacobi(
 {
   const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
-  if ((x < dim.x) && (y < dim.y))
+  if ((x > 0) && (y > 0) && (x < dim.x - 1) && (y < dim.y - 1))
   {
     X[y * dim.x + x] = jacobi(x, y, X, B, dim, alpha, beta);
   }
@@ -125,9 +125,9 @@ __global__ void kernel_sboundary(
   const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
 
-  /// @todo There is probably a more elegant way to do this
   if ((x < dim.x) && (y < dim.y))
   {
+    /// @todo There is probably a more elegant way to do this
     if ((x == 0) && (y == 0)) // North-West Corner
     {
       M[y * dim.x + x] = scale * M[(y + 1) * dim.x + (x + 1)];
@@ -171,9 +171,9 @@ __global__ void kernel_vboundary(
   const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
   const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
 
-  /// @todo There is probably a more elegant way to do this
   if ((x < dim.x) && (y < dim.y))
   {
+    /// @todo There is probably a more elegant way to do this
     if ((x == 0) && (y == 0)) // North-West Corner
     {
       M[matrix_index(x, y, dim, 0)] = scale * M[matrix_index(x + 1, y + 1, dim, 0)];
@@ -210,5 +210,27 @@ __global__ void kernel_vboundary(
     {
       M[matrix_index(x, y, dim, 1)] = scale * M[matrix_index(x, y - 1, dim, 0)];
     }
+  }
+}
+
+__global__ void kernel_gradient(
+    const MatrixDim dim,
+    const float *P,
+    float *V,
+    const float halfrdx)
+{
+  const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if ((x > 0) && (y > 0) && (x < dim.x - 1) && (y < dim.y - 1))
+  {
+    float pN, pS, pE, pW;
+    neighbors_scalar(x, y, P, dim, &pN, &pS, &pE, &pW);
+
+    const float gradX = halfrdx * (pW - pS);
+    const float gradY = halfrdx * (pS - pN);
+
+    V[matrix_index(x, y, dim, 0)] -= gradX;
+    V[matrix_index(x, y, dim, 1)] -= gradY;
   }
 }

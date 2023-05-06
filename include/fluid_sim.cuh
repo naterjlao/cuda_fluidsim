@@ -59,4 +59,10 @@ __global__ void kernel_vboundary(
     const MatrixDim dim,
     float *M,
     const float scale);
+
+__global__ void kernel_gradient(
+    const MatrixDim dim,
+    const float *P,
+    float *V,
+    const float halfrdx);
 #endif

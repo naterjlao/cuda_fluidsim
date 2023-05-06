@@ -96,11 +96,14 @@ int main()
         for (size_t j_iter = 0; j_iter < JACOBI_ITERATIONS; j_iter++)
         {
             kernel_sboundary<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS, d_pfield,1.0);
-            kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,1.0,0.25);
+            kernel_jacobi<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS,d_pfield,d_dfield,-1.0,0.01);
         }
 
         // ----- COMPUTE BOUNDARIES ----- //
         kernel_vboundary<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS, d_vfield, -1.0);
+
+        // ----- COMPUTE PRESSURE-VELOCITY GRADIENT ----- //
+        kernel_gradient<<<DIM_GRID, DIM_BLOCK>>>(DIMENSIONS, d_pfield, d_vfield, 0.001);
 
         // ----- CONVERT TO BGR ----- //
         kernel_vfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_vfield, d_vbgr, DIMENSIONS); // Advection

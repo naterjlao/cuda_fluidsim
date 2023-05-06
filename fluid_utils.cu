@@ -21,11 +21,9 @@ __host__ __device__ size_t matrix_index(const size_t x, const size_t y, const Ma
 /// @param data data matrix (see note)
 /// @param vx interpolation of the x-vector component
 /// @param vy interpolation of the y-vector component
-/// @return true if the interpolation is in bounds of the given
-/// dimensions; false if
 /// @note the data matrix must be defined as a multi-dimensions
 /// array of [dim.y][dim.x][2] (2 is the vector length)
-__host__ __device__ bool bilinear_interpolation(
+__host__ __device__ void bilinear_interpolation(
     const float px, const float py,
     const float *data, const MatrixDim dim,
     float *vx, float *vy)
@@ -35,9 +33,6 @@ __host__ __device__ bool bilinear_interpolation(
     const size_t idy_hi = (size_t)ceil(py);
     const size_t idy_lo = (size_t)floor(py);
 
-    bool retval = false;
-
-    /// @todo check lower bounds
     if ((idx_hi < dim.x) && (idy_hi < dim.y))
     {
         const float factor_h = px - floor(px); // Horizontal Ratio Factor
@@ -62,11 +57,7 @@ __host__ __device__ bool bilinear_interpolation(
         // Center Interpolation
         *vx = north_vx * (1.0 - factor_v) + south_vx * (factor_v);
         *vy = north_vy * (1.0 - factor_v) + south_vy * (factor_v);
-
-        retval = true;
     }
-
-    return retval;
 }
 
 __host__ __device__ void neighbors_vector(
