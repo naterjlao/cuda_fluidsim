@@ -3,7 +3,7 @@ OPENCV_ARGS=`pkg-config --cflags opencv` `pkg-config --libs opencv`
 INCLUDE=./include
 OBJDIR=./build
 BINDIR=./bin
-EXECUTABLES=$(BINDIR)/main $(BINDIR)/fluid_sim_test
+EXECUTABLES=$(BINDIR)/main
 
 ################### EXECUTABLES ###################
 
@@ -17,14 +17,6 @@ $(BINDIR)/main: $(OBJDIR)/main.o $(OBJDIR)/window_utils.o $(OBJDIR)/fluid_sim.o 
 		$(OBJDIR)/fluid_utils.o \
 		-o $(BINDIR)/main
 
-$(BINDIR)/fluid_sim_test: $(OBJDIR)/fluid_sim_test.o $(OBJDIR)/fluid_sim.o $(OBJDIR)/window_utils.o $(OBJDIR)/fluid_utils.o
-	nvcc -arch=$(CUDA_ARCH) \
-		$(OBJDIR)/fluid_sim_test.o \
-		$(OBJDIR)/fluid_sim.o \
-		$(OBJDIR)/window_utils.o \
-		$(OBJDIR)/fluid_utils.o \
-		-o $(BINDIR)/fluid_sim_test
-
 ################### OBJECTS ###################
 
 $(OBJDIR)/main.o: main.cu
@@ -32,9 +24,6 @@ $(OBJDIR)/main.o: main.cu
 
 $(OBJDIR)/window_utils.o: window_utils.cu $(INCLUDE)/window_utils.cuh
 	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc window_utils.cu -o $@
-
-$(OBJDIR)/fluid_sim_test.o: fluid_sim_test.cu
-	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_sim_test.cu -o $@
 
 $(OBJDIR)/fluid_sim.o: fluid_sim.cu $(INCLUDE)/fluid_sim.cuh
 	nvcc -I$(INCLUDE) -arch=$(CUDA_ARCH) -rdc=true -dc fluid_sim.cu -o $@
