@@ -78,6 +78,8 @@ static void fluid_sim_frame(
     kernel_vboundary<<<cudim_grid, cudim_block>>>(dim, d_vfield, -1.0);
 
     // ----- COMPUTE PRESSURE-VELOCITY GRADIENT ----- //
+    /// @todo this step will cause a unstable "leak" to occur on the south-west
+    /// corner. to prevent this issue, comment out this step.
     kernel_gradient<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_vfield, 0.001);
 }
 
