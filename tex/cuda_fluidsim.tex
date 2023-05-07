@@ -8,7 +8,7 @@ BCOR5mm, % Binding correction
 ]{scrartcl}
 
 \input{structure.tex} % Include the structure.tex file which specified the document structure and layout
-\usepackage{amsmath}
+\usepackage{physics, amsmath}
 \title{\normalfont{Fluid Simulation on CUDA GPUs}}
 \subtitle{Johns Hopkins University: EN.605.617.81.SP23 Introduction to GPU Programming }
 \author{\spacedlowsmallcaps{Nate Lao (nlao1@jh.edu)}}
@@ -131,13 +131,117 @@ For the designed architecture, a little-endian system is used. The byte order fo
     \end{verbatim}
 \end{center}
 
-\pagebreak
+For rendering Vector Field Matrices, the following conversions are used for each pixel/vector coordinate:
+
+\begin{equation}
+    CH_{red} = \begin{cases}
+        0xFF * |V_x|, & \text{if}\ |V_x| < 1 \\
+        0xFF, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+\begin{equation}
+    CH_{blue} = \begin{cases}
+        0xFF * |V_y|, & \text{if}\ |V_y| < 1 \\
+        0xFF, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+For rendering Vector Field Matrices, the following conversions are used for each pixel/scalar coordinate:
+
+\begin{equation}
+    CH_{red} = \begin{cases}
+        0xFF * S, & \text{if}\ S > 0 \\
+        0x0, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+\begin{equation}
+    CH_{blue} = \begin{cases}
+        0xFF * |S|, & \text{if}\ S < 0 \\
+        0x0, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
 \section{Algorithms} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jfkljflkdjlk
+The main computation of this project is based off the Navier-Stokes Equations for Incompressible Flow:
 
+\begin{equation}
+    \frac{\delta \vb{u}}{\delta t} = - (\vb{u} \dotproduct \grad)\vb{u} - \frac{1}{p}\grad p + v \grad^2 \vb{u} + \vb{F}
+\end{equation}
+\begin{equation}
+    \grad \dotproduct \vb{u} = 0
+\end{equation}
 
-\pagebreak
+This report will not go in-depth of the derivation and implementation of these equations, as these are expressed in the whitepaper presented in
+\begin{center}
+    \href{https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu}{GPU GEMS - Chapter 38}
+\end{center}
+
+The simulator will initialize multiple buffers at the beginning of the application. All buffers are \verb|memset| to zero:
+\begin{verbatim}
+    float *d_vfield, *h_vfield; // Device/Host Velocity Vector Field Matrices
+    float *d_dfield, *h_dfield; // Device/Host Divergence Scalar Field Matrices
+    float *d_pfield, *h_pfield; // Device/Host Pressure Scalar Field Matrices
+    
+    unsigned int *h_vbgr, *d_vbgr; // Device/Host Velocity BGR Field Matrices
+    unsigned int *h_dbgr, *d_dbgr; // Device/Host Divergence BGR Field Matrices
+    unsigned int *h_pbgr, *d_pbgr; // Device/Host Pressure BGR Field Matrices
+\end{verbatim}
+
+The \verb|kernel_*| functions are the device entry points for GPU operations. For every processing frame, the following operations occur:
+
+\begin{verbatim}
+|    Compute Advection by performing kernel_advect()
+|        on d_vfield
+|
+|    Compute Divergence by performing kernel_divergence()
+|        on d_vfield with output d_dfield
+|
+|    Compute Pressure using the following operations:
+|    |    Zero-out d_pfield
+|    |    For n number of iterations:
+|    |    |    perform kernel_sboundary() on d_pfield
+|    |    |    perform kernel_jacobi() on input d_dfield with output d_pfield
+|    |    EndFor
+|    EndOperation
+|
+|    Compute Velocity Boundaries by performing kernel_vboundary() on d_vfield
+|    
+|    Subtract the pressure gradient from velocity by performing kernel_gradient()
+|        on input d_pfield and output d_vfield
+|
+|    Convert the Velocity, Divergence and Pressure Fields to the BGR representations
+|        and render to screen.
+|
+|    Detect Mouse Click, pulse the velocity field at the mouse coordinate
+\end{verbatim}
+
+When invoking kernel calls, the dimensionality of the CUDA block/grids are defined as follows:
+\begin{verbatim}
+    dim3 DIM_BLOCK(32, 32);
+    dim3 DIM_GRID(
+        (DIMENSIONS.x + DIM_BLOCK.x - 1) / DIM_BLOCK.x,
+        (DIMENSIONS.y + DIM_BLOCK.y - 1) / DIM_BLOCK.y);
+\end{verbatim}
+
+The block dimension of 32 by 32 is determined by the CUDA architecture, it is the maximum number of threads per block at the time or writing.
+By allocating the grid dimensions to accommodate the block and resolution dimensions, the kernel function may determine the matrix coordinates
+using the following operations:
+
+\begin{verbatim}
+    const size_t x = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
+\end{verbatim}
+
+The \verb|x| and \verb|y| variables above corresponds directly to the coordinates in Vector/Scalar/BGR Field space.
+
 \section{Limitations} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jfkljflkdjlk
+Due to time constants, the following features were unable to be implemented at the tim of writing:
+\begin{itemize}
+    \item Ink Flow
+    \item Vorticity
+\end{itemize}
 
+This project may be re-visited in the future, should the interest arise.
 \end{document}
