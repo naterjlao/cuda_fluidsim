@@ -41,15 +41,15 @@ static void mouse_pulse(int event, int x, int y, int flags, void *params)
 
 //-----------------------------------------------------------------------------
 /// @brief Performs Fluid Simulation Timestep for a single frame.
-/// @param cudim_grid 
-/// @param cudim_block 
-/// @param dim 
-/// @param d_vfield 
-/// @param d_dfield 
-/// @param d_pfield 
-/// @param rdx 
-/// @param timestep 
-/// @param jacobi_iterations 
+/// @param cudim_grid dim3 definition of the CUDA grid dimensions
+/// @param cudim_block dim3 definition of the CUDA block dimensions (32x32)
+/// @param dim working vector space dimensions
+/// @param d_vfield velocity vector field matrix
+/// @param d_dfield divergence scalar field matrix
+/// @param d_pfield pressure scalar field matrix
+/// @param rdx space factor constant
+/// @param timestep timestep factor
+/// @param jacobi_iterations number of iterations to perform for jacobi solutions
 //-----------------------------------------------------------------------------
 static void fluid_sim_frame(
     const dim3 cudim_grid, const dim3 cudim_block, const MatrixDim dim,

@@ -18,8 +18,20 @@ BCOR5mm, % Binding correction
 \maketitle
 
 \section{Summary} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jfkljflkdjlk
+The Simulation of Fast Fluid Dynamics project is an implementation of 2-dimensional fluid computation on NVIDIA GPUs leveraging the CUDA library.
+The algorithms in this project were largely based on the whitepaper presented in
 
+\begin{center}
+    \href{https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu}{GPU GEMS - Chapter 38}
+\end{center}
+
+The source code for this project is publicly available on GitHub. At the time of writing, version 0.1.0 is the referenced baseline:
+
+\begin{center}
+    \url{https://github.com/naterjlao/cuda_fluidsim}
+\end{center}
+
+The report is an overall summary of design decisions, implementation details and limitations presented in this project.
 \begin{figure}[h]
     \centering
     \includegraphics[scale=0.5]{../png/divergence_example.PNG}
@@ -27,21 +39,100 @@ jfkljflkdjlk
 \end{figure}
 
 \pagebreak
-
 \section{Technologies} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jfkljflkdjlk
+This project was developed on a Linux/Debian machine with a NVIDIA RTX 3060 GPU. There is no guarantee that the source code will be compatible
+with other systems. Appropriate modifications may need to be performed in order to build this project on other systems.
 
-\pagebreak
+The main driver of this project is the NVIDIA CUDA library, the version information for CUDA nvcc compiler is as follows:
+\begin{verbatim}
+    $ nvcc --version
+    nvcc: NVIDIA (R) Cuda compiler driver
+    Copyright (c) 2005-2022 NVIDIA Corporation
+    Built on Mon_Oct_24_19:12:58_PDT_2022
+    Cuda compilation tools, release 12.0, V12.0.76
+    Build cuda_12.0.r12.0/compiler.31968024_0
+\end{verbatim}
+
+OpenCV was used to render visual representations of fluid calculations and to provide iteractivity for the user. The version information is
+presented below:
+
+\begin{verbatim}
+    OpenCV version : 3.2.0
+    Major version : 3
+    Minor version : 2
+    Subminor version : 0
+\end{verbatim}
+
+The machine that executes the simulation does not need a desktop environment. X-Forwarding may be used to project visual renders on a client
+machine.
+
 \section{Data Structures} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jfkljflkdjlk
+The scope of this project will only deal with a 2-dimensional field for fluid simulation. The data structures are defined tailored to 2-dimensions,
+however the code may be modified to accommodate 3-dimensions. These data structures are desinged with the CUDA architecture in mind, to simplify
+the development process and to provide an optimization to processing.
 
-$\begin{bmatrix}
-x & x & x\\
-a & b & c
-\end{bmatrix}$
+Three types of datastructures are used:
+\begin{itemize}
+    \item Vector Field Matrix
+    \item Scalar Field Matrix
+    \item BGRA Matrix
+\end{itemize}
+
+\subsection{Vector Field Matrix}
+The Vector Field Matrix is represented as multidimensions array in memory. The allocation of this matrix is equivalent to the following declaration:
+\begin{center}
+    \begin{verbatim}
+        float v_field[y-dim][x-dim][2]
+    \end{verbatim}
+\end{center}
+In this declaration, \verb|y-dim| and \verb|x-dim| are the number of elements in the $y$ (rows) and $x$ (column) dimensions in terms of pixels, respectively.
+The \verb|2| constant represents the individual vector component for each pixel the 0-index is x-component and 1-index is the y-component.
+
+This would be represented in memory as follows:
+\begin{center}
+    $v\_field = \begin{bmatrix}
+        (0.0,0.0) & (0.0,0.0) & (0.0, 0.0)\\
+        (0.0,0.0) & (0.0,0.0) & (0.0, 0.0)\\
+        (0.0,0.0) & (2.0,3.0) & (0.0, 0.0)\\
+    \end{bmatrix}$
+\end{center}
+
+In this example, accessing the following indices in C would the following:
+\begin{center}
+    \begin{verbatim}
+        v_field[2][1][0] -> 2.0
+        v_field[2][1][1] -> 3.0
+    \end{verbatim}
+\end{center}
+
+Deriving the array index given an x and y coordinate and vector component index is as follows:
+\begin{equation}
+    index = (y * x_{dim} + x) * 2 + CI_{vector}
+\end{equation}
+
+\subsection{Scalar Field Matrix}
+The Scalar Field Matrix is similar to the Vector Field Matrix. The declaration of this data structure is more straightforward to its vector counterpart:
+\begin{verbatim}
+    float s_field[y-dim][x-dim]
+\end{verbatim}
+Deriving the array index given an x and y coordinate is as follows:
+\begin{equation}
+    index = y * x_{dim} + x
+\end{equation}
+    
+\subsection{BGRA}
+The BGRA (Blue-Green-Red-Alpha) Matrix is a representation of color channel intensities for each pixel. In OpenCV, each channel is represented
+an an octet byte, where \verb|0x00| is the minimal intensity and \verb|0xFF| is the maximum.
+
+For the designed architecture, a little-endian system is used. The byte order for every pixel is arranged as follows:
+\begin{center}
+    \begin{verbatim}
+        pixel = 0xAARRGGBB
+    \end{verbatim}
+\end{center}
 
 \pagebreak
-\section{Algorithm} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Algorithms} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 jfkljflkdjlk
 
 
