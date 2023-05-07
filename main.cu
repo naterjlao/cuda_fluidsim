@@ -6,18 +6,14 @@
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
 #include <stdlib.h>
+#include <chrono>
 
 #include "include/window_utils.cuh"
 #include "include/fluid_sim.cuh"
 #include "include/fluid_utils.cuh"
 
-/// @brief Defines a 2-dimensional coordinate structure.
-struct Coordinate
-{
-    size_t x;
-    size_t y;
-};
-static Coordinate pulse_coordinate;
+static size_t pulse_x;
+static size_t pulse_y;
 static bool pulse = false;
 
 //-----------------------------------------------------------------------------
@@ -30,8 +26,8 @@ static bool pulse = false;
 //-----------------------------------------------------------------------------
 static void mouse_pulse(int event, int x, int y, int flags, void *params)
 {
-    pulse_coordinate.x = x;
-    pulse_coordinate.y = y;
+    pulse_x = x;
+    pulse_y = y;
     switch (event)
     {
     case cv::EVENT_LBUTTONDOWN:
@@ -119,16 +115,19 @@ int main()
     /// @brief Device Buffer Pointer for the Fluid Velocity Field.
     /// The Fluid Velocity Field is a Matrix of 2-Dimensional Vectors.
     const size_t VECTOR_FIELD_SIZE = sizeof(float) * DIMENSIONS.x * DIMENSIONS.y * DIMENSIONS.vl;
-    float *d_vfield; cudaMalloc(&d_vfield, VECTOR_FIELD_SIZE);
+    float *d_vfield, *h_vfield;
+    cudaMalloc(&d_vfield, VECTOR_FIELD_SIZE); cudaMallocHost(&h_vfield, VECTOR_FIELD_SIZE);
 
     /// @brief Device Buffer Pointer for the Fluid Divergence Field.
     /// The Fluid Divergence Field a a Matrix of Scalar Values.
     const size_t SCALAR_FIELD_SIZE = sizeof(float) * DIMENSIONS.x * DIMENSIONS.y;
-    float *d_dfield; cudaMalloc(&d_dfield, SCALAR_FIELD_SIZE);
+    float *d_dfield, *h_dfield;
+    cudaMalloc(&d_dfield, SCALAR_FIELD_SIZE); cudaMallocHost(&h_dfield, SCALAR_FIELD_SIZE);
 
     /// @brief Device Buffer Pointer for the Fluid Divergence Field.
     /// The Fluid Divergence Field a a Matrix of Scalar Values.
-    float *d_pfield; cudaMalloc(&d_pfield, SCALAR_FIELD_SIZE);
+    float *d_pfield, *h_pfield;
+    cudaMalloc(&d_pfield, SCALAR_FIELD_SIZE); cudaMallocHost(&h_pfield, SCALAR_FIELD_SIZE);
     
     // ----- BGR WINDOW RENDERING ----- //
     // Setup host and device GBR matrix buffers
@@ -148,14 +147,24 @@ int main()
     // ----- WINDOW MOUSE HANDLER HOOK ----- //
     cv::setMouseCallback("Velocity", mouse_pulse, 0);
 
+    printf("CUDA FLUID SIMULATOR\n");
+    printf("AUTHOR: NATE LAO (NLAO1@JH.EDU)\n");
+    printf("--------------------\n");
     // ----- FRAME LOOP ----- //
     while (true)
     {
+        const std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
+
         // ----- PERFORM FLUID SIMULATION ----- //
         fluid_sim_frame(
             DIM_GRID, DIM_BLOCK, DIMENSIONS,
             d_vfield, d_dfield, d_pfield,
             RDX, TIMESTEP, JACOBI_ITERATIONS);
+
+        // ----- COPY TO HOST ----- //
+        cudaMemcpy(h_vfield, d_vfield, VECTOR_FIELD_SIZE, cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_dfield, d_dfield, SCALAR_FIELD_SIZE, cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_pfield, d_pfield, SCALAR_FIELD_SIZE, cudaMemcpyDeviceToHost);
 
         // ----- CONVERT TO BGR ----- //
         kernel_vfield2bgr<<<DIM_GRID, DIM_BLOCK>>>(d_vfield, d_vbgr, DIMENSIONS); // Advection
@@ -174,16 +183,27 @@ int main()
         cv::imshow("Pressure", pimage);
         cv::waitKey(FRAMERATE);
 
+        const std::chrono::time_point<std::chrono::steady_clock> end_time = std::chrono::steady_clock::now();
+        printf("FPS: %.02f Velocity: (%+.05f, %+.05f) Divergence: %+.05f Pressure: %+0.5f\r",
+            (1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count()),
+            h_vfield[matrix_index(pulse_x, pulse_y, DIMENSIONS, 0)],
+            h_vfield[matrix_index(pulse_x, pulse_y, DIMENSIONS, 1)],
+            h_dfield[pulse_y * DIMENSIONS.x + pulse_x],
+            h_pfield[pulse_y * DIMENSIONS.x + pulse_x]);
+
         // ----- PULSE VELOCITY ON WINDOW CLICK ----- //
         if (pulse)
         {
-            kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(pulse_coordinate.x, pulse_coordinate.y, d_vfield, DIMENSIONS, 0.5);
+            kernel_pulse<<<DIM_GRID, DIM_BLOCK>>>(pulse_x, pulse_y, d_vfield, DIMENSIONS, 0.5);
         }
     }
 
     cudaFree(d_vfield);
     cudaFree(d_dfield);
     cudaFree(d_pfield);
+    cudaFree(h_vfield);
+    cudaFree(h_dfield);
+    cudaFree(h_pfield);
     cudaFree(d_vbgr);
     cudaFree(d_dbgr);
     cudaFree(d_pbgr);
