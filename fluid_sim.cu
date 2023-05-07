@@ -298,7 +298,7 @@ __global__ void kernel_gradient(
     float pN, pS, pE, pW;
     neighbors_scalar(x, y, P, dim, &pN, &pS, &pE, &pW);
 
-    const float gradX = halfrdx * (pW - pS);
+    const float gradX = halfrdx * (pE - pW);
     const float gradY = halfrdx * (pS - pN);
 
     V[matrix_index(x, y, dim, 0)] -= gradX;

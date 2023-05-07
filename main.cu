@@ -60,14 +60,14 @@ static void fluid_sim_frame(
     kernel_advect<<<cudim_grid, cudim_block>>>(dim, d_vfield, d_vfield, rdx, timestep, 0.9);
 
     // ----- COMPUTE DIVERGENCE ----- //
-    kernel_divergence<<<cudim_grid, cudim_block>>>(dim, d_vfield, d_dfield, rdx / 2.0);
+    kernel_divergence<<<cudim_grid, cudim_block>>>(dim, d_vfield, d_dfield, 0.5);
 
     // ----- COMPUTE PRESSURE ----- //
     cudaMemset(d_pfield, 0, sizeof(float) * dim.x * dim.y);
     for (size_t j_iter = 0; j_iter < jacobi_iterations; j_iter++)
     {
         kernel_sboundary<<<cudim_grid, cudim_block>>>(dim, d_pfield, 1.0);
-        kernel_jacobi<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_dfield, -1.0, 0.01);
+        kernel_jacobi<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_dfield, -1.0, 0.25);
     }
 
     // ----- COMPUTE BOUNDARIES ----- //
@@ -75,7 +75,7 @@ static void fluid_sim_frame(
 
     // ----- COMPUTE PRESSURE-VELOCITY GRADIENT ----- //
     /// @todo this step is unstable at higher values of rdx
-    kernel_gradient<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_vfield, 0.01);
+    kernel_gradient<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_vfield, 0.5);
 }
 
 //-----------------------------------------------------------------------------
