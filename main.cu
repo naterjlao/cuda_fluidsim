@@ -66,7 +66,7 @@ static void fluid_sim_frame(
     cudaMemset(d_pfield, 0, sizeof(float) * dim.x * dim.y);
     for (size_t j_iter = 0; j_iter < jacobi_iterations; j_iter++)
     {
-        kernel_sboundary<<<cudim_grid, cudim_block>>>(dim, d_pfield, -1.0);
+        kernel_sboundary<<<cudim_grid, cudim_block>>>(dim, d_pfield, 1.0);
         kernel_jacobi<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_dfield, -1.0, 0.01);
     }
 
@@ -74,9 +74,8 @@ static void fluid_sim_frame(
     kernel_vboundary<<<cudim_grid, cudim_block>>>(dim, d_vfield, -1.0);
 
     // ----- COMPUTE PRESSURE-VELOCITY GRADIENT ----- //
-    /// @todo this step will cause a unstable "leak" to occur on the south-west
-    /// corner. to prevent this issue, comment out this step.
-    kernel_gradient<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_vfield, 0.001);
+    /// @todo this step is unstable at higher values of rdx
+    kernel_gradient<<<cudim_grid, cudim_block>>>(dim, d_pfield, d_vfield, 0.01);
 }
 
 //-----------------------------------------------------------------------------

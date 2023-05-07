@@ -27,8 +27,8 @@ __global__ void kernel_advect(
   const size_t y = blockIdx.y * blockDim.y + threadIdx.y;
   if ((x < dim.x) && (y < dim.y))
   {
-    float dx_new = output_data[matrix_index(x, y, dim, 0)];
-    float dy_new = output_data[matrix_index(x, y, dim, 1)];
+    float dx_new = 0.0;
+    float dy_new = 0.0;
 
     advect(dim, x, y, rdx, timestep, dissipation,
            input_data, output_data, &dx_new, &dy_new);
