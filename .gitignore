@@ -5,6 +5,7 @@ bin/fluid_sim_test
 *.o
 build/*.o
 */*.aux
+*/*.out
 */*.log
 */*.pdf
 .vscode
