@@ -1,6 +1,6 @@
 \documentclass[
 10pt, % Main document font size
-a4paper, % Paper type, use 'letterpaper' for US Letter paper
+letterpaper, % Paper type, use 'letterpaper' for US Letter paper
 oneside, % One page layout (no page indentation)
 %twoside, % Two page layout (page indentation for binding and different headers)
 headinclude,footinclude, % Extra spacing for the header and footer
@@ -8,7 +8,7 @@ BCOR5mm, % Binding correction
 ]{scrartcl}
 
 \input{structure.tex} % Include the structure.tex file which specified the document structure and layout
-
+\usepackage{amsmath}
 \title{\normalfont{Fluid Simulation on CUDA GPUs}}
 \subtitle{Johns Hopkins University: EN.605.617.81.SP23 Introduction to GPU Programming }
 \author{\spacedlowsmallcaps{Nate Lao (nlao1@jh.edu)}}
@@ -16,6 +16,37 @@ BCOR5mm, % Binding correction
 
 \begin{document}
 \maketitle
-\section{Summary}
+
+\section{Summary} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 jfkljflkdjlk
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.5]{../png/divergence_example.PNG}
+    \caption{Fluid Divergence Field}
+\end{figure}
+
+\pagebreak
+
+\section{Technologies} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jfkljflkdjlk
+
+\pagebreak
+\section{Data Structures} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jfkljflkdjlk
+
+$\begin{bmatrix}
+x & x & x\\
+a & b & c
+\end{bmatrix}$
+
+\pagebreak
+\section{Algorithm} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jfkljflkdjlk
+
+
+\pagebreak
+\section{Limitations} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jfkljflkdjlk
+
 \end{document}
